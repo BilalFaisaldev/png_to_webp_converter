@@ -202,16 +202,31 @@ function initEvents() {
   elements.signupForm.addEventListener('submit', handleSignupSubmit);
   elements.btnLogout.addEventListener('click', handleLogout);
 
-  // Analytics Navigation Listeners
-  elements.btnNavConverter.addEventListener('click', () => toggleWorkspaceView('converter'));
-  elements.btnNavAnalytics.addEventListener('click', () => toggleWorkspaceView('analytics'));
-  elements.btnClearHistory.addEventListener('click', handleClearHistory);
-
   // Help & Docs Modals Listeners
-  elements.navLinkDocs.addEventListener('click', (e) => { e.preventDefault(); elements.docsModal.style.display = 'flex'; });
-  elements.navLinkHelp.addEventListener('click', (e) => { e.preventDefault(); elements.helpModal.style.display = 'flex'; });
-  elements.btnCloseDocs.addEventListener('click', () => { elements.docsModal.style.display = 'none'; });
-  elements.btnCloseHelp.addEventListener('click', () => { elements.helpModal.style.display = 'none'; });
+  elements.navLinkDocs.addEventListener('click', (e) => { 
+    e.preventDefault(); 
+    elements.docsModal.style.display = 'flex'; 
+  });
+  elements.navLinkHelp.addEventListener('click', (e) => { 
+    e.preventDefault(); 
+    elements.helpModal.style.display = 'flex'; 
+  });
+  
+  elements.btnCloseDocs.addEventListener('click', () => { 
+    elements.docsModal.style.display = 'none'; 
+  });
+
+  const resetHelpModalFormView = () => {
+    if (elements.supportSuccessMsg && elements.supportForm) {
+      elements.supportSuccessMsg.style.display = 'none';
+      elements.supportForm.style.display = 'block';
+    }
+  };
+
+  elements.btnCloseHelp.addEventListener('click', () => { 
+    elements.helpModal.style.display = 'none'; 
+    resetHelpModalFormView();
+  });
   
   // Close modals on clicking outside of modal content
   window.addEventListener('click', (e) => {
@@ -220,8 +235,65 @@ function initEvents() {
     }
     if (e.target === elements.helpModal) {
       elements.helpModal.style.display = 'none';
+      resetHelpModalFormView();
     }
   });
+
+  // Docs Tab Switcher
+  const tabButtons = elements.docsModal.querySelectorAll('.modal-tab-btn');
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      
+      const targetPaneId = btn.dataset.tab;
+      elements.docsModal.querySelectorAll('.modal-pane').forEach(pane => {
+        pane.classList.remove('active');
+      });
+      document.getElementById(targetPaneId).classList.add('active');
+    });
+  });
+
+  // Support Form Submit Handler
+  if (elements.supportForm) {
+    elements.supportForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = elements.supportForm.querySelector('button[type="submit"]');
+      const origText = submitBtn.textContent;
+      
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Sending...';
+      
+      // Simulate submission delay
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      elements.supportForm.style.display = 'none';
+      elements.supportSuccessMsg.style.display = 'block';
+      
+      // Log Support Request locally
+      if (state.user) {
+        const key = `support_req_${state.user.username}`;
+        const reqs = JSON.parse(localStorage.getItem(key) || '[]');
+        reqs.push({
+          category: document.getElementById('support-category').value,
+          message: document.getElementById('support-message').value,
+          date: new Date().toISOString()
+        });
+        localStorage.setItem(key, JSON.stringify(reqs));
+      }
+      
+      submitBtn.disabled = false;
+      submitBtn.textContent = origText;
+      elements.supportForm.reset();
+    });
+  }
+
+  // Reset Support Form Action
+  if (elements.btnResetSupport) {
+    elements.btnResetSupport.addEventListener('click', () => {
+      resetHelpModalFormView();
+    });
+  }
 
   // Check if session exists on load
   checkAuthSession();
@@ -465,13 +537,6 @@ async function startBatchConversion() {
     elements.btnDownloadAll.textContent = `Download All (${successfulRuns.length} WebP ZIP)`;
   }
 
-  // Save to history & update stats
-  const newSuccessfulRuns = state.filesQueue.filter(f => f.status === 'success' && !f.loggedToHistory);
-  if (newSuccessfulRuns.length > 0) {
-    saveBatchToHistory(newSuccessfulRuns);
-    // Mark as logged so they don't get logged again if we run again
-    newSuccessfulRuns.forEach(f => f.loggedToHistory = true);
-  }
 }
 
 function convertSingleImage(entry) {
