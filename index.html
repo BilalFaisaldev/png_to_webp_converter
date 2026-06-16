@@ -251,39 +251,94 @@
         <h4 class="contact-title">CONNECT & CONTACT</h4>
         <p class="contact-row">📞 Phone: 0327-2190535  |  ✉️ Email: bilalfaisalarain@gmail.com</p>
         <p class="contact-row">📸 Instagram: @bilal.faisalarain  |  💻 GitHub: github.com/BilalFaisaldev</p>
-      </div>
-
-    </div>
-  </footer>
-
-  <!-- ==========================================
+        <!-- ==========================================
        DOCUMENTATION MODAL
        ========================================== -->
-  <div class="modal-overlay" id="docs-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
-    <div class="glass-card modal-card" style="width: 100%; max-width: 550px; padding: 24px; display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto;">
-      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px;">
-        <h2 style="color: #fff; font-size: 18px; font-weight: 800;">📚 Documentation</h2>
-        <button class="modal-close" id="btn-close-docs" style="background: transparent; border: none; color: var(--slate-400); font-size: 24px; cursor: pointer; transition: color var(--transition-fast);">×</button>
+  <div class="modal-overlay" id="docs-modal" style="display: none;">
+    <div class="glass-card modal-card">
+      <div class="modal-header">
+        <h2>📚 Documentation Center</h2>
+        <button class="modal-close" id="btn-close-docs">&times;</button>
       </div>
-      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; font-size: 12px; color: var(--slate-300); line-height: 1.5;">
-        <div>
-          <h4 style="color: #818cf8; font-weight: 700; margin-bottom: 4px;">⚡ About WebP Format</h4>
-          <p>WebP is a next-generation image format developed by Google. It provides superior lossless and lossy compression for images on the web, yielding up to 30% smaller files compared to PNGs and JPEGs without visible loss in quality.</p>
+      
+      <!-- Modal Navigation Tabs -->
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" data-tab="tab-docs-start">🚀 Getting Started</button>
+        <button class="modal-tab-btn" data-tab="tab-docs-settings">⚙️ Settings Guide</button>
+        <button class="modal-tab-btn" data-tab="tab-docs-tech">🔒 Engine & Security</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Tab 1: Quick Start -->
+        <div class="modal-pane active" id="tab-docs-start">
+          <div class="doc-step">
+            <span class="step-num">1</span>
+            <div class="step-content">
+              <strong>Import Images</strong>
+              <p>Drag and drop folders/files (PNG, JPG, BMP, TIFF) directly into the upload dropzone, or click to browse files from your computer.</p>
+            </div>
+          </div>
+          <div class="doc-step">
+            <span class="step-num">2</span>
+            <div class="step-content">
+              <strong>Adjust Conversion Settings</strong>
+              <p>Select **Lossy** (optimized size) or **Lossless** (original quality). Tune the Quality Factor slider (we recommend 80-85% for general web use).</p>
+            </div>
+          </div>
+          <div class="doc-step">
+            <span class="step-num">3</span>
+            <div class="step-content">
+              <strong>Convert & Export</strong>
+              <p>Click "Convert Images" to run client-side rendering. Download your images individually or bundle them as a single ZIP archive.</p>
+            </div>
+          </div>
         </div>
         
-        <div>
-          <h4 style="color: #818cf8; font-weight: 700; margin-bottom: 4px;">⚙️ Settings Guide</h4>
-          <ul style="padding-left: 20px;">
-            <li><strong>Lossy (Optimized):</strong> Uses smart compression to significantly reduce file size while maintaining excellent quality. Ideal for websites and web speed.</li>
-            <li><strong>Lossless (Perfect):</strong> Keeps every single pixel identical to the original image. Ideal for archiving high-fidelity images.</li>
-            <li><strong>Quality Factor:</strong> Sets the compression level (1-100). We recommend 80-85% for the best quality-to-size balance.</li>
-            <li><strong>Preserve Transparency:</strong> Preserves transparent alpha layers. Unchecking this converts transparent areas to a solid white background.</li>
-          </ul>
+        <!-- Tab 2: Settings Guide -->
+        <div class="modal-pane" id="tab-docs-settings">
+          <table class="modal-table">
+            <thead>
+              <tr>
+                <th>Setting</th>
+                <th>Behavior</th>
+                <th>Best Used For</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Lossy Mode</strong></td>
+                <td>Aggressively reduces details invisible to the human eye.</td>
+                <td>Websites, blogs, & speed loading.</td>
+              </tr>
+              <tr>
+                <td><strong>Lossless Mode</strong></td>
+                <td>Retains every single pixel exactly as the original.</td>
+                <td>Logos, high-res designs & archiving.</td>
+              </tr>
+              <tr>
+                <td><strong>Transparency</strong></td>
+                <td>Preserves alpha transparency masks. Disabling uses white fallback.</td>
+                <td>Transparent background PNGs.</td>
+              </tr>
+              <tr>
+                <td><strong>ZIP Mode</strong></td>
+                <td>Combines converted outputs into a single zip file.</td>
+                <td>Bulk batch processing (10+ images).</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
-        <div>
-          <h4 style="color: #818cf8; font-weight: 700; margin-bottom: 4px;">🔒 Privacy & Security</h4>
-          <p>This tool performs <strong>100% client-side conversion</strong>. Your images are processed using HTML5 canvas inside your browser local sandbox. Your files are never uploaded to any server, ensuring complete confidentiality.</p>
+        <!-- Tab 3: Security & Engine -->
+        <div class="modal-pane" id="tab-docs-tech">
+          <div class="tech-card">
+            <h4>🔒 100% Secure Client-Side Conversion</h4>
+            <p>Your files are never transmitted to any external server. We utilize the HTML5 Canvas context and local memory sandbox to generate WebP image streams directly in your browser. This enables offline conversions and guarantees strict data confidentiality.</p>
+          </div>
+          <div class="tech-card" style="margin-top: 10px;">
+            <h4>⚡ Zero Dependencies Backend</h4>
+            <p>Our app runs entirely without server-side processing. All sessions (signup/login) and conversion state tracking run dynamically on top of client `localStorage` endpoints.</p>
+          </div>
         </div>
       </div>
     </div>
@@ -292,41 +347,70 @@
   <!-- ==========================================
        HELP & SUPPORT MODAL
        ========================================== -->
-  <div class="modal-overlay" id="help-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); z-index: 1000; justify-content: center; align-items: center; padding: 20px;">
-    <div class="glass-card modal-card" style="width: 100%; max-width: 550px; padding: 24px; display: flex; flex-direction: column; gap: 16px; max-height: 90vh; overflow-y: auto;">
-      <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 10px;">
-        <h2 style="color: #fff; font-size: 18px; font-weight: 800;">❓ Help & Support Center</h2>
-        <button class="modal-close" id="btn-close-help" style="background: transparent; border: none; color: var(--slate-400); font-size: 24px; cursor: pointer; transition: color var(--transition-fast);">×</button>
+  <div class="modal-overlay" id="help-modal" style="display: none;">
+    <div class="glass-card modal-card">
+      <div class="modal-header">
+        <h2>❓ Help & Support Center</h2>
+        <button class="modal-close" id="btn-close-help">&times;</button>
       </div>
-      <div class="modal-body" style="display: flex; flex-direction: column; gap: 14px; font-size: 12px; color: var(--slate-300); line-height: 1.5;">
-        <div>
-          <h4 style="color: #818cf8; font-weight: 700; margin-bottom: 6px;">🙋 Frequently Asked Questions</h4>
+      <div class="modal-body">
+        <h4 style="color: #fff; font-weight: 700; margin-bottom: 8px;">🙋 Frequently Asked Questions</h4>
+        
+        <!-- Collapsible Accordion -->
+        <div class="faq-list">
+          <details class="faq-accordion" open>
+            <summary>Can I run this converter offline?</summary>
+            <div class="faq-content">
+              <p>Yes, absolutely! Since the registration flow, image conversion, and zip building occur 100% in your local browser sandbox, the entire application works offline once loaded.</p>
+            </div>
+          </details>
           
-          <div class="faq-item" style="margin-bottom: 8px;">
-            <strong style="color: #fff;">Q: Can I use this app offline?</strong>
-            <p>A: Yes! Since all operations and user logins run client-side on your device, you can convert files and view stats offline.</p>
-          </div>
-          
-          <div class="faq-item" style="margin-bottom: 8px;">
-            <strong style="color: #fff;">Q: How do I download my history files?</strong>
-            <p>A: The analytics history only stores conversion stats and metadata to save browser space. Converted images are downloaded instantly to your local computer.</p>
-          </div>
+          <details class="faq-accordion">
+            <summary>What is the maximum file size supported?</summary>
+            <div class="faq-content">
+              <p>There is no artificial limit. However, converting extremely large images (e.g. 50MB+) depends entirely on your system's RAM and browser capabilities.</p>
+            </div>
+          </details>
 
-          <div class="faq-item">
-            <strong style="color: #fff;">Q: Is there a file size limit?</strong>
-            <p>A: No! You can import as many images as you like. However, importing very large files (e.g. 50MB+) depends on your computer's RAM speed.</p>
+          <details class="faq-accordion">
+            <summary>Is WebP compression safe for transparent logos?</summary>
+            <div class="faq-content">
+              <p>Yes. By enabling the "Preserve Transparency (Alpha)" setting, the converter retains transparent layers intact during conversion.</p>
+            </div>
+          </details>
+        </div>
+
+        <!-- Interactive Support Form Section -->
+        <div class="support-form-container" style="border-top: 1px solid rgba(255, 255, 255, 0.08); padding-top: 16px; margin-top: 16px;">
+          <h4 style="color: #fff; font-weight: 700; margin-bottom: 8px;">✉️ Send Support Request</h4>
+          
+          <form id="support-form" class="support-form">
+            <div class="form-group">
+              <label for="support-category">Issue Category</label>
+              <select id="support-category" class="search-input" style="background: var(--input-bg); color: #fff; border: 1px solid var(--glass-border); width: 100%; border-radius: 8px; padding: 8px 12px;" required>
+                <option value="question">General Question</option>
+                <option value="bug">Bug Report / Failure</option>
+                <option value="feature">Feedback or Request</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-top: 8px;">
+              <label for="support-message">Description</label>
+              <textarea id="support-message" class="search-input" rows="3" placeholder="Explain the issue or feedback..." style="background: var(--input-bg); color: #fff; border: 1px solid var(--glass-border); width: 100%; resize: none; border-radius: 8px; padding: 8px 12px;" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 12px; width: 100%;">Send Request</button>
+          </form>
+
+          <!-- Success banner -->
+          <div id="support-success-msg" style="display: none; text-align: center; padding: 16px 8px;">
+            <span style="font-size: 32px; display: block; margin-bottom: 8px;">✅</span>
+            <strong style="color: #fff; font-size: 13px; display: block;">Request Submitted!</strong>
+            <p style="color: var(--slate-400); font-size: 11px; margin-top: 4px;">Thank you for your feedback. Bilal Faisal will respond to your registered email shortly.</p>
+            <button class="btn btn-secondary" id="btn-reset-support" style="margin-top: 12px; font-size: 11px; padding: 4px 12px; width: auto; display: inline-flex;">Send Another Message</button>
           </div>
         </div>
 
-        <div style="border-top: 1px solid rgba(255,255,255,0.06); padding-top: 12px;">
-          <h4 style="color: #818cf8; font-weight: 700; margin-bottom: 6px;">📞 Contact Bilal Faisal Arain</h4>
-          <p>If you face any issues or need custom software development, contact us:</p>
-          <ul style="margin-top: 6px; list-style: none; padding-left: 0; display: flex; flex-direction: column; gap: 4px;">
-            <li>📞 <strong>Phone:</strong> 0327-2190535</li>
-            <li>✉️ <strong>Email:</strong> bilalfaisalarain@gmail.com</li>
-            <li>📸 <strong>Instagram:</strong> @bilal.faisalarain</li>
-            <li>💻 <strong>GitHub:</strong> github.com/BilalFaisaldev</li>
-          </ul>
+        <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06); font-size: 10px; color: var(--slate-500); text-align: center;">
+          Direct Helpline: <strong>0327-2190535</strong> | Email: <strong>bilalfaisalarain@gmail.com</strong>
         </div>
       </div>
     </div>
