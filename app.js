@@ -447,6 +447,14 @@ async function startBatchConversion() {
     elements.btnDownloadAll.style.display = 'inline-flex';
     elements.btnDownloadAll.textContent = `Download All (${successfulRuns.length} WebP ZIP)`;
   }
+
+  // Save to history & update stats
+  const newSuccessfulRuns = state.filesQueue.filter(f => f.status === 'success' && !f.loggedToHistory);
+  if (newSuccessfulRuns.length > 0) {
+    saveBatchToHistory(newSuccessfulRuns);
+    // Mark as logged so they don't get logged again if we run again
+    newSuccessfulRuns.forEach(f => f.loggedToHistory = true);
+  }
 }
 
 function convertSingleImage(entry) {
