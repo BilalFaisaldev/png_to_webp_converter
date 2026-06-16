@@ -64,7 +64,15 @@ const elements = {
   btnCloseHelp: document.getElementById('btn-close-help'),
   supportForm: document.getElementById('support-form'),
   supportSuccessMsg: document.getElementById('support-success-msg'),
-  btnResetSupport: document.getElementById('btn-reset-support')
+  btnResetSupport: document.getElementById('btn-reset-support'),
+
+  // Admin and Credits elements
+  navbarCredits: document.getElementById('navbar-credits'),
+  adminView: document.getElementById('admin-view'),
+  adminCreateForm: document.getElementById('admin-create-user-form'),
+  adminUsersTableBody: document.getElementById('admin-users-table-body'),
+  adminCreateError: document.getElementById('admin-create-error'),
+  adminCreateSuccess: document.getElementById('admin-create-success')
 };
 
 /* ==========================================================================
