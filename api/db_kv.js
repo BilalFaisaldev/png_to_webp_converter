@@ -20,10 +20,13 @@ async function getValue(key) {
 
 async function setValue(key, value) {
   try {
-    const res = await fetch(`${BASE_URL}/UpdateValue/${APP_KEY}/${key}/${value}`, {
+    const url = `${BASE_URL}/UpdateValue/${APP_KEY}/${key}/${value}`;
+    console.log(`[setValue] Calling URL: ${url}`);
+    const res = await fetch(url, {
       method: 'POST'
     });
     const text = await res.text();
+    console.log(`[setValue] Response status: ${res.status}, text: ${JSON.stringify(text)}`);
     return text === 'true';
   } catch (e) {
     console.error(`Error setting key ${key}:`, e);
