@@ -63,7 +63,15 @@ const elements = {
   statSavedSize: document.getElementById('stat-saved-size'),
   statRatioAvg: document.getElementById('stat-ratio-avg'),
   btnClearHistory: document.getElementById('btn-clear-history'),
-  historyTableBody: document.getElementById('history-table-body')
+  historyTableBody: document.getElementById('history-table-body'),
+
+  // Help & Docs Modals
+  navLinkDocs: document.getElementById('nav-link-docs'),
+  navLinkHelp: document.getElementById('nav-link-help'),
+  docsModal: document.getElementById('docs-modal'),
+  helpModal: document.getElementById('help-modal'),
+  btnCloseDocs: document.getElementById('btn-close-docs'),
+  btnCloseHelp: document.getElementById('btn-close-help')
 };
 
 /* ==========================================================================
