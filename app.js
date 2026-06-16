@@ -201,6 +201,11 @@ function initEvents() {
   elements.signupForm.addEventListener('submit', handleSignupSubmit);
   elements.btnLogout.addEventListener('click', handleLogout);
 
+  // Analytics Navigation Listeners
+  elements.btnNavConverter.addEventListener('click', () => toggleWorkspaceView('converter'));
+  elements.btnNavAnalytics.addEventListener('click', () => toggleWorkspaceView('analytics'));
+  elements.btnClearHistory.addEventListener('click', handleClearHistory);
+
   // Check if session exists on load
   checkAuthSession();
 }
