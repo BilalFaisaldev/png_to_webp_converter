@@ -5,7 +5,8 @@ const BASE_URL = 'https://keyvalue.immanuel.co/api/KeyVal';
 
 async function getValue(key) {
   try {
-    const res = await fetch(`${BASE_URL}/GetValue/${APP_KEY}/${key}`);
+    const url = `${BASE_URL}/GetValue?appKey=${APP_KEY}&key=${encodeURIComponent(key)}`;
+    const res = await fetch(url);
     const text = await res.text();
     let val = JSON.parse(text);
     if (val === "" || val === null || val === undefined) {
@@ -20,14 +21,16 @@ async function getValue(key) {
 
 async function setValue(key, value) {
   try {
-    const url = `${BASE_URL}/UpdateValue/${APP_KEY}/${key}/${value}`;
-    console.log(`[setValue] Calling URL: ${url}`);
+    const url = `${BASE_URL}/UpdateValue?appKey=${APP_KEY}&key=${encodeURIComponent(key)}&value=${encodeURIComponent(value)}`;
     const res = await fetch(url, {
       method: 'POST'
     });
     const text = await res.text();
-    console.log(`[setValue] Response status: ${res.status}, text: ${JSON.stringify(text)}`);
-    return text === 'true';
+    try {
+      return JSON.parse(text) === true;
+    } catch {
+      return text.includes('true');
+    }
   } catch (e) {
     console.error(`Error setting key ${key}:`, e);
     return false;
