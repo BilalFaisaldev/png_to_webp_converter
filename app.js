@@ -303,6 +303,11 @@ function initEvents() {
     });
   }
 
+  // Admin Create User Form listener
+  if (elements.adminCreateForm) {
+    elements.adminCreateForm.addEventListener('submit', handleAdminCreateUserSubmit);
+  }
+
   // Check if session exists on load
   checkAuthSession();
 }
