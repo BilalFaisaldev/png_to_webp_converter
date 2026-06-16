@@ -2,17 +2,18 @@ const db = require('./api/db_kv');
 const bcrypt = require('bcryptjs');
 
 async function test() {
-  console.log("Checking admin user...");
+  console.log("Seeding and checking admin user...");
   try {
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash('admin1234', salt);
+    
+    console.log("Calling db.createUser directly...");
+    const created = await db.createUser('admin', 'admin@converter.com', hashedPassword, 999999);
+    console.log("Create user returned:", created);
+
+    console.log("Fetching admin user again...");
     let user = await db.getUserByUsername('admin');
     console.log("User retrieved:", user);
-    
-    if (user) {
-      const isMatch = await bcrypt.compare('admin1234', user.password);
-      console.log("Password check match for 'admin1234':", isMatch);
-    } else {
-      console.log("Admin user was null!");
-    }
   } catch (e) {
     console.error("Error during test:", e);
   }
