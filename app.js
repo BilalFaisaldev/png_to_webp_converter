@@ -442,6 +442,16 @@ function filterTableRows() {
 async function startBatchConversion() {
   if (state.isConverting || state.filesQueue.length === 0) return;
   
+  // Credit check for non-admin users
+  const pendingImagesCount = state.filesQueue.filter(f => f.status !== 'success').length;
+  if (state.user && state.user.username !== 'admin') {
+    const currentCredits = parseInt(state.user.credits || '0', 10);
+    if (currentCredits < pendingImagesCount) {
+      alert(`Insufficient Credits! You are trying to convert ${pendingImagesCount} images, but only have ${currentCredits} credits left. Please contact Bilal Faisal Arain (0327-2190535) to refill credits.`);
+      return;
+    }
+  }
+
   toggleUIControls(false);
   state.isConverting = true;
   elements.btnConvert.textContent = "Converting...";
@@ -485,42 +495,69 @@ async function startBatchConversion() {
     try {
       const results = await convertSingleImage(entry);
       
-      // Update entry state
-      entry.status = 'success';
-      entry.webpBlob = results.blob;
-      entry.webpSize = results.blob.size;
-      entry.webpUrl = URL.createObjectURL(results.blob);
-      entry.resolution = `${results.width} × ${results.height}`;
-      
-      // Update UI row elements
-      document.getElementById(`res-${entry.id}`).textContent = entry.resolution;
-      document.getElementById(`res-${entry.id}`).style.color = '#fff';
-      
-      const ratio = ((entry.size - entry.webpSize) / entry.size * 100).toFixed(0);
-      const outputTxt = document.getElementById(`out-size-${entry.id}`);
-      outputTxt.innerHTML = `${formatSize(entry.webpSize)} <span class="ratio-badge">-${ratio}%</span>`;
-      outputTxt.style.color = '#fff';
-      
-      // Load converted image preview thumbnail
-      const thumb = document.getElementById(`thumb-${entry.id}`);
-      if (thumb) {
-        thumb.innerHTML = '';
-        const imgEl = document.createElement('img');
-        imgEl.src = entry.webpUrl;
-        imgEl.className = 'thumb-preview';
-        imgEl.style.width = '100%';
-        imgEl.style.height = '100%';
-        thumb.appendChild(imgEl);
+      // Deduct credit for standard user
+      let creditDeducted = true;
+      if (state.user && state.user.username !== 'admin') {
+        try {
+          const credRes = await fetch('/api/credits', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username: state.user.username, amount: 1 })
+          });
+          const credData = await credRes.json();
+          if (credRes.ok) {
+            state.user.credits = credData.credits;
+            localStorage.setItem('auth_user', JSON.stringify(state.user));
+            elements.navbarCredits.textContent = `Credits: ${state.user.credits}`;
+          } else {
+            creditDeducted = false;
+            throw new Error(credData.error || 'Failed to deduct credits');
+          }
+        } catch (e) {
+          creditDeducted = false;
+          alert(`Credit Error: ${e.message}. Conversion stopped.`);
+          break; // Stop batch run if credit check fails or is exhausted
+        }
       }
-      
-      if (statusBadge) {
-        statusBadge.textContent = 'Success';
-        statusBadge.className = 'status-badge success';
-      }
-      
-      // Handle Auto Download if set
-      if (state.autoDownload && state.downloadMode === 'individual') {
-        downloadIndividualFile(entry);
+
+      if (creditDeducted) {
+        // Update entry state
+        entry.status = 'success';
+        entry.webpBlob = results.blob;
+        entry.webpSize = results.blob.size;
+        entry.webpUrl = URL.createObjectURL(results.blob);
+        entry.resolution = `${results.width} × ${results.height}`;
+        
+        // Update UI row elements
+        document.getElementById(`res-${entry.id}`).textContent = entry.resolution;
+        document.getElementById(`res-${entry.id}`).style.color = '#fff';
+        
+        const ratio = ((entry.size - entry.webpSize) / entry.size * 100).toFixed(0);
+        const outputTxt = document.getElementById(`out-size-${entry.id}`);
+        outputTxt.innerHTML = `${formatSize(entry.webpSize)} <span class="ratio-badge">-${ratio}%</span>`;
+        outputTxt.style.color = '#fff';
+        
+        // Load converted image preview thumbnail
+        const thumb = document.getElementById(`thumb-${entry.id}`);
+        if (thumb) {
+          thumb.innerHTML = '';
+          const imgEl = document.createElement('img');
+          imgEl.src = entry.webpUrl;
+          imgEl.className = 'thumb-preview';
+          imgEl.style.width = '100%';
+          imgEl.style.height = '100%';
+          thumb.appendChild(imgEl);
+        }
+        
+        if (statusBadge) {
+          statusBadge.textContent = 'Success';
+          statusBadge.className = 'status-badge success';
+        }
+        
+        // Handle Auto Download if set
+        if (state.autoDownload && state.downloadMode === 'individual') {
+          downloadIndividualFile(entry);
+        }
       }
 
     } catch (err) {
