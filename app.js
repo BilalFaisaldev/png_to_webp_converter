@@ -9,7 +9,8 @@ const state = {
   qualityValue: 85,
   preserveTransparency: true,
   autoDownload: false,
-  searchQuery: ''
+  searchQuery: '',
+  user: null
 };
 
 // DOM Elements
@@ -37,7 +38,22 @@ const elements = {
   filesTableBody: document.getElementById('files-table-body'),
   progressBar: document.getElementById('progress-bar'),
   progressContainer: document.getElementById('progress-container'),
-  statsText: document.getElementById('stats-text')
+  statsText: document.getElementById('stats-text'),
+  
+  // Auth DOM Elements
+  authContainer: document.getElementById('auth-container'),
+  dashboardContainer: document.getElementById('dashboard-container'),
+  developerFooter: document.getElementById('DeveloperFooter'),
+  tabLogin: document.getElementById('tab-login'),
+  tabSignup: document.getElementById('tab-signup'),
+  loginForm: document.getElementById('login-form'),
+  signupForm: document.getElementById('signup-form'),
+  loginError: document.getElementById('login-error'),
+  signupError: document.getElementById('signup-error'),
+  signupSuccess: document.getElementById('signup-success'),
+  userProfileHeader: document.getElementById('user-profile-header'),
+  userDisplayName: document.getElementById('user-display-name'),
+  btnLogout: document.getElementById('btn-logout')
 };
 
 /* ==========================================================================
@@ -167,6 +183,16 @@ function initEvents() {
   elements.btnConvert.addEventListener('click', startBatchConversion);
   elements.btnClear.addEventListener('click', clearQueue);
   elements.btnDownloadAll.addEventListener('click', downloadZipArchive);
+
+  // Auth Event Listeners
+  elements.tabLogin.addEventListener('click', () => toggleAuthTabs('login'));
+  elements.tabSignup.addEventListener('click', () => toggleAuthTabs('signup'));
+  elements.loginForm.addEventListener('submit', handleLoginSubmit);
+  elements.signupForm.addEventListener('submit', handleSignupSubmit);
+  elements.btnLogout.addEventListener('click', handleLogout);
+
+  // Check if session exists on load
+  checkAuthSession();
 }
 
 /* ==========================================================================
