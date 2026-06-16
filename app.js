@@ -628,31 +628,32 @@ async function handleLoginSubmit(e) {
   e.preventDefault();
   elements.loginError.style.display = 'none';
   
-  const usernameOrEmail = document.getElementById('login-username').value;
+  const usernameOrEmail = document.getElementById('login-username').value.trim().toLowerCase();
   const password = document.getElementById('login-password').value;
   const submitBtn = elements.loginForm.querySelector('button[type="submit"]');
   
   submitBtn.disabled = true;
   submitBtn.textContent = 'Logging in...';
   
+  // Simulate minor network delay for feedback feel
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
   try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usernameOrEmail, password })
-    });
+    const users = JSON.parse(localStorage.getItem('registered_users') || '[]');
+    const user = users.find(u => 
+      (u.username.toLowerCase() === usernameOrEmail || u.email.toLowerCase() === usernameOrEmail) && 
+      u.password === password
+    );
     
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Authentication failed.');
+    if (!user) {
+      throw new Error('Invalid username/email or password.');
     }
     
-    // Save state and local storage
-    state.user = data.user;
-    localStorage.setItem('auth_user', JSON.stringify(data.user));
+    // Save session
+    const activeSession = { username: user.username, email: user.email };
+    state.user = activeSession;
+    localStorage.setItem('auth_user', JSON.stringify(activeSession));
     
-    // Reset form & show dashboard
     elements.loginForm.reset();
     showAuthenticatedApp();
     
@@ -670,26 +671,40 @@ async function handleSignupSubmit(e) {
   elements.signupError.style.display = 'none';
   elements.signupSuccess.style.display = 'none';
   
-  const username = document.getElementById('signup-username').value;
-  const email = document.getElementById('signup-email').value;
+  const username = document.getElementById('signup-username').value.trim();
+  const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value;
   const submitBtn = elements.signupForm.querySelector('button[type="submit"]');
+  
+  if (username.length < 3) {
+    elements.signupError.textContent = 'Username must be at least 3 characters.';
+    elements.signupError.style.display = 'block';
+    return;
+  }
+  
+  if (password.length < 6) {
+    elements.signupError.textContent = 'Password must be at least 6 characters.';
+    elements.signupError.style.display = 'block';
+    return;
+  }
   
   submitBtn.disabled = true;
   submitBtn.textContent = 'Creating account...';
   
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
   try {
-    const response = await fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password })
-    });
+    const users = JSON.parse(localStorage.getItem('registered_users') || '[]');
     
-    const data = await response.json();
-    
-    if (!response.ok) {
-      throw new Error(data.error || 'Registration failed.');
+    if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
+      throw new Error('This username is already taken.');
     }
+    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
+      throw new Error('This email is already registered.');
+    }
+    
+    users.push({ username, email, password });
+    localStorage.setItem('registered_users', JSON.stringify(users));
     
     elements.signupSuccess.textContent = 'Account created! Please switch to Login tab to log in.';
     elements.signupSuccess.style.display = 'block';
