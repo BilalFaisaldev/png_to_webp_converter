@@ -53,7 +53,17 @@ const elements = {
   signupSuccess: document.getElementById('signup-success'),
   userProfileHeader: document.getElementById('user-profile-header'),
   userDisplayName: document.getElementById('user-display-name'),
-  btnLogout: document.getElementById('btn-logout')
+  btnLogout: document.getElementById('btn-logout'),
+
+  // Analytics DOM Elements
+  btnNavConverter: document.getElementById('btn-nav-converter'),
+  btnNavAnalytics: document.getElementById('btn-nav-analytics'),
+  analyticsView: document.getElementById('analytics-view'),
+  statProcessedCount: document.getElementById('stat-processed-count'),
+  statSavedSize: document.getElementById('stat-saved-size'),
+  statRatioAvg: document.getElementById('stat-ratio-avg'),
+  btnClearHistory: document.getElementById('btn-clear-history'),
+  historyTableBody: document.getElementById('history-table-body')
 };
 
 /* ==========================================================================
