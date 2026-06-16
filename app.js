@@ -214,6 +214,22 @@ function initEvents() {
   elements.btnNavAnalytics.addEventListener('click', () => toggleWorkspaceView('analytics'));
   elements.btnClearHistory.addEventListener('click', handleClearHistory);
 
+  // Help & Docs Modals Listeners
+  elements.navLinkDocs.addEventListener('click', (e) => { e.preventDefault(); elements.docsModal.style.display = 'flex'; });
+  elements.navLinkHelp.addEventListener('click', (e) => { e.preventDefault(); elements.helpModal.style.display = 'flex'; });
+  elements.btnCloseDocs.addEventListener('click', () => { elements.docsModal.style.display = 'none'; });
+  elements.btnCloseHelp.addEventListener('click', () => { elements.helpModal.style.display = 'none'; });
+  
+  // Close modals on clicking outside of modal content
+  window.addEventListener('click', (e) => {
+    if (e.target === elements.docsModal) {
+      elements.docsModal.style.display = 'none';
+    }
+    if (e.target === elements.helpModal) {
+      elements.helpModal.style.display = 'none';
+    }
+  });
+
   // Check if session exists on load
   checkAuthSession();
 }
