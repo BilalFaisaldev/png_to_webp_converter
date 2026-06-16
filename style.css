@@ -1252,5 +1252,19 @@ h1, h2, h3, h4 {
   display: block;
 }
 
+/* ==========================================================================
+   ADMIN MANAGEMENT PANEL STYLING
+   ========================================================================== */
+.admin-view {
+  animation: slideUp var(--transition-normal) forwards;
+}
+
+.admin-card {
+  transition: border-color var(--transition-normal);
+}
+.admin-card:hover {
+  border-color: var(--glass-border-glow);
+}
+
 
 
