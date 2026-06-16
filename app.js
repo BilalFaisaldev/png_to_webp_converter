@@ -710,11 +710,42 @@ function checkAuthSession() {
 
 function showAuthenticatedApp() {
   elements.authContainer.style.display = 'none';
-  elements.dashboardContainer.style.display = 'flex';
   elements.developerFooter.style.display = 'block';
   
   elements.userDisplayName.textContent = state.user.username;
   elements.userProfileHeader.style.display = 'inline-flex';
+
+  if (state.user.username === 'admin') {
+    // Show Admin View
+    elements.adminView.style.display = 'flex';
+    elements.navbarCredits.style.display = 'none';
+    
+    // Hide Converter View
+    document.querySelector('.sidebar-column').style.display = 'none';
+    elements.dragDropArea.style.display = 'none';
+    elements.emptyStateView.classList.remove('active');
+    elements.tableView.classList.remove('active');
+    
+    loadAdminUsers();
+  } else {
+    // Show Converter View
+    elements.adminView.style.display = 'none';
+    elements.navbarCredits.style.display = 'inline-flex';
+    elements.navbarCredits.textContent = `Credits: ${state.user.credits}`;
+    
+    document.querySelector('.sidebar-column').style.display = 'flex';
+    elements.dragDropArea.style.display = 'flex';
+    
+    // Toggle active workspace stack item
+    const total = state.filesQueue.length;
+    if (total === 0) {
+      elements.emptyStateView.classList.add('active');
+      elements.tableView.classList.remove('active');
+    } else {
+      elements.emptyStateView.classList.remove('active');
+      elements.tableView.classList.add('active');
+    }
+  }
 }
 
 function showAuthForms() {
@@ -722,6 +753,7 @@ function showAuthForms() {
   elements.dashboardContainer.style.display = 'none';
   elements.developerFooter.style.display = 'none';
   elements.userProfileHeader.style.display = 'none';
+  elements.adminView.style.display = 'none';
 }
 
 function toggleAuthTabs(mode) {
@@ -746,33 +778,31 @@ async function handleLoginSubmit(e) {
   e.preventDefault();
   elements.loginError.style.display = 'none';
   
-  const usernameOrEmail = document.getElementById('login-username').value.trim().toLowerCase();
+  const usernameOrEmail = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value;
   const submitBtn = elements.loginForm.querySelector('button[type="submit"]');
   
   submitBtn.disabled = true;
   submitBtn.textContent = 'Logging in...';
   
-  // Simulate minor network delay for feedback feel
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
   try {
-    const users = JSON.parse(localStorage.getItem('registered_users') || '[]');
-    const user = users.find(u => 
-      (u.username.toLowerCase() === usernameOrEmail || u.email.toLowerCase() === usernameOrEmail) && 
-      u.password === password
-    );
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usernameOrEmail, password })
+    });
     
-    if (!user) {
-      throw new Error('Invalid username/email or password.');
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || 'Invalid username or password.');
     }
     
     // Save session
-    const activeSession = { username: user.username, email: user.email };
-    state.user = activeSession;
-    localStorage.setItem('auth_user', JSON.stringify(activeSession));
+    state.user = data.user;
+    localStorage.setItem('auth_user', JSON.stringify(data.user));
     
     elements.loginForm.reset();
+    elements.dashboardContainer.style.display = 'flex';
     showAuthenticatedApp();
     
   } catch (err) {
@@ -784,56 +814,35 @@ async function handleLoginSubmit(e) {
   }
 }
 
+// WhatsApp Request Access Form Submission
 async function handleSignupSubmit(e) {
   e.preventDefault();
   elements.signupError.style.display = 'none';
   elements.signupSuccess.style.display = 'none';
   
-  const username = document.getElementById('signup-username').value.trim();
-  const email = document.getElementById('signup-email').value.trim();
-  const password = document.getElementById('signup-password').value;
+  const name = document.getElementById('req-name').value.trim();
+  const email = document.getElementById('req-email').value.trim();
+  const whatsapp = document.getElementById('req-whatsapp').value.trim();
+  const credits = document.getElementById('req-credits').value;
   const submitBtn = elements.signupForm.querySelector('button[type="submit"]');
   
-  if (username.length < 3) {
-    elements.signupError.textContent = 'Username must be at least 3 characters.';
-    elements.signupError.style.display = 'block';
-    return;
-  }
-  
-  if (password.length < 6) {
-    elements.signupError.textContent = 'Password must be at least 6 characters.';
-    elements.signupError.style.display = 'block';
-    return;
-  }
-  
   submitBtn.disabled = true;
-  submitBtn.textContent = 'Creating account...';
-  
-  await new Promise(resolve => setTimeout(resolve, 500));
   
   try {
-    const users = JSON.parse(localStorage.getItem('registered_users') || '[]');
+    const messageText = `Hello Bilal Faisal, I want to request access to the Image to WebP Converter.\n\nDetails:\n- Name: ${name}\n- Email: ${email}\n- WhatsApp: ${whatsapp}\n- Requested Credits: ${credits}`;
+    const waUrl = `https://wa.me/923272190535?text=${encodeURIComponent(messageText)}`;
     
-    if (users.some(u => u.username.toLowerCase() === username.toLowerCase())) {
-      throw new Error('This username is already taken.');
-    }
-    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-      throw new Error('This email is already registered.');
-    }
+    // Redirect to WhatsApp
+    window.open(waUrl, '_blank');
     
-    users.push({ username, email, password });
-    localStorage.setItem('registered_users', JSON.stringify(users));
-    
-    elements.signupSuccess.textContent = 'Account created! Please switch to Login tab to log in.';
+    elements.signupSuccess.textContent = 'WhatsApp request initiated! Once the administrator creates your account, you can log in here.';
     elements.signupSuccess.style.display = 'block';
     elements.signupForm.reset();
-    
   } catch (err) {
-    elements.signupError.textContent = err.message;
+    elements.signupError.textContent = err.message || 'Failed to request access.';
     elements.signupError.style.display = 'block';
   } finally {
     submitBtn.disabled = false;
-    submitBtn.textContent = 'Create Account';
   }
 }
 
@@ -841,6 +850,151 @@ function handleLogout() {
   state.user = null;
   localStorage.removeItem('auth_user');
   showAuthForms();
+}
+
+/* ==========================================================================
+   ADMIN DASHBOARD ACTIONS
+   ========================================================================== */
+async function loadAdminUsers() {
+  elements.adminUsersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--slate-500); padding: 15px;">Loading users...</td></tr>';
+  
+  try {
+    const res = await fetch('/api/admin?action=list', {
+      headers: { 'x-admin-auth': 'admin1234' }
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    elements.adminUsersTableBody.innerHTML = '';
+    
+    if (data.users.length === 0) {
+      elements.adminUsersTableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--slate-500); padding: 15px;">No client accounts registered. Add one above!</td></tr>';
+      return;
+    }
+
+    data.users.forEach(user => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong style="color:#fff;">${escapeHtml(user.username)}</strong></td>
+        <td>${escapeHtml(user.email)}</td>
+        <td style="text-align: center;">
+          <div style="display: inline-flex; align-items: center; gap: 8px;">
+            <input type="number" value="${user.credits}" id="credits-${user.username}" class="search-input" style="width: 70px; padding: 4px 8px; text-align: center; font-size:12px; margin:0;">
+            <button class="btn btn-accent btn-update-credits" data-username="${user.username}" style="padding: 4px 8px; font-size: 11px; width:auto;">Set</button>
+          </div>
+        </td>
+        <td style="text-align: center;">
+          <button class="btn btn-danger btn-delete-user" data-username="${user.username}" style="padding: 4px 10px; font-size: 11px; width:auto;">Delete</button>
+        </td>
+      `;
+      elements.adminUsersTableBody.appendChild(tr);
+    });
+
+    // Attach actions
+    elements.adminUsersTableBody.querySelectorAll('.btn-update-credits').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const username = btn.dataset.username;
+        const credits = document.getElementById(`credits-${username}`).value;
+        const origText = btn.textContent;
+        btn.textContent = '...';
+        btn.disabled = true;
+        
+        try {
+          const r = await fetch('/api/admin?action=update_credits', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-admin-auth': 'admin1234' 
+            },
+            body: JSON.stringify({ username, credits })
+          });
+          if (!r.ok) {
+            const errData = await r.json();
+            throw new Error(errData.error);
+          }
+          alert(`Credits for ${username} updated successfully!`);
+          loadAdminUsers();
+        } catch (e) {
+          alert('Update error: ' + e.message);
+          btn.textContent = origText;
+          btn.disabled = false;
+        }
+      });
+    });
+
+    elements.adminUsersTableBody.querySelectorAll('.btn-delete-user').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const username = btn.dataset.username;
+        if (!confirm(`Are you absolutely sure you want to delete user ${username}?`)) return;
+        
+        btn.textContent = '...';
+        btn.disabled = true;
+
+        try {
+          const r = await fetch('/api/admin?action=delete_user', {
+            method: 'POST',
+            headers: { 
+              'Content-Type': 'application/json',
+              'x-admin-auth': 'admin1234' 
+            },
+            body: JSON.stringify({ username })
+          });
+          if (!r.ok) {
+            const errData = await r.json();
+            throw new Error(errData.error);
+          }
+          loadAdminUsers();
+        } catch (e) {
+          alert('Delete error: ' + e.message);
+          btn.disabled = false;
+          btn.textContent = 'Delete';
+        }
+      });
+    });
+
+  } catch (e) {
+    elements.adminUsersTableBody.innerHTML = `<tr><td colspan="4" style="text-align: center; color: var(--status-error); padding: 15px;">Failed to load users: ${e.message}</td></tr>`;
+  }
+}
+
+async function handleAdminCreateUserSubmit(e) {
+  e.preventDefault();
+  elements.adminCreateError.style.display = 'none';
+  elements.adminCreateSuccess.style.display = 'none';
+
+  const username = document.getElementById('admin-user-username').value.trim();
+  const email = document.getElementById('admin-user-email').value.trim();
+  const password = document.getElementById('admin-user-password').value;
+  const credits = document.getElementById('admin-user-credits').value;
+  const submitBtn = elements.adminCreateForm.querySelector('button[type="submit"]');
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Creating...';
+
+  try {
+    const r = await fetch('/api/admin?action=create_user', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-auth': 'admin1234'
+      },
+      body: JSON.stringify({ username, email, password, credits })
+    });
+    const data = await r.json();
+    if (!r.ok) throw new Error(data.error);
+
+    elements.adminCreateSuccess.textContent = 'User account created successfully!';
+    elements.adminCreateSuccess.style.display = 'block';
+    elements.adminCreateForm.reset();
+    document.getElementById('admin-user-credits').value = '50';
+    loadAdminUsers();
+  } catch (err) {
+    elements.adminCreateError.textContent = err.message;
+    elements.adminCreateError.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Create User';
+  }
 }
 
 // Start listener
