@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>⚡ Bulk Image to WebP Converter - Client-Side SaaS Tool</title>
+  <meta name="description" content="Convert PNG, JPG, JPEG, BMP, and TIFF images to WebP format instantly in your browser. 100% client-side, secure, offline-capable, and lightning fast.">
+  
+  <!-- Modern Google Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- JSZip CDN for packing converted images client-side -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" referrerpolicy="no-referrer"></script>
+</head>
+<body>
+
+  <!-- ==========================================
+       TOP NAVBAR HEADER
+       ========================================== -->
+  <header class="navbar" id="Navbar">
+    <div class="nav-left">
+      <span class="logo-icon">⚡</span>
+      <h1 class="logo-title">Image to WebP</h1>
+      <span class="nav-sep">|</span>
+      <div class="status-container">
+        <span class="status-title">Bulk Batch Converter</span>
+        <span class="pulse-dot" id="pulse-dot"></span>
+      </div>
+    </div>
+    <div class="nav-right">
+      <a href="#" class="nav-link" title="Mock documentation link">Docs</a>
+      <a href="#" class="nav-link" title="Mock help center link">Help</a>
+      <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light theme (mock)">🌙</button>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       MAIN DASHBOARD CONTAINER
+       ========================================== -->
+  <main class="dashboard-container">
+    
+    <!-- LEFT SIDEBAR: Settings & Actions Card -->
+    <aside class="sidebar-column">
+      <div class="glass-card settings-card">
+        
+        <!-- Output settings section -->
+        <section class="settings-section">
+          <h2 class="section-title">DOWNLOAD MODE</h2>
+          <div class="segmented-control" id="download-mode-control">
+            <button class="segment-btn active" data-mode="zip">ZIP Archive</button>
+            <button class="segment-btn" data-mode="individual">Individual Files</button>
+          </div>
+          <p class="section-helper" id="download-mode-helper">Files will be compiled into a single ZIP archive for bulk download.</p>
+        </section>
+
+        <!-- Compression Settings Section -->
+        <section class="settings-section">
+          <h2 class="section-title">COMPRESSION METRIC</h2>
+          <div class="segmented-control" id="compression-metric-control">
+            <button class="segment-btn active" data-metric="lossy">Lossy (Optimized)</button>
+            <button class="segment-btn" data-metric="lossless">Lossless (Perfect)</button>
+          </div>
+          
+          <!-- Quality Slider Card -->
+          <div class="quality-slider-container" id="quality-slider-container">
+            <div class="slider-header">
+              <span class="slider-title">Quality Factor</span>
+              <span class="badge" id="quality-badge">85%</span>
+            </div>
+            <input type="range" id="quality-slider" min="1" max="100" value="85" class="custom-slider">
+          </div>
+          
+          <!-- Checkbox Options -->
+          <div class="checkbox-group">
+            <label class="checkbox-container">
+              <input type="checkbox" id="preserve-transparency" checked>
+              <span class="checkmark"></span>
+              Preserve Transparency (Alpha)
+            </label>
+            <label class="checkbox-container">
+              <input type="checkbox" id="auto-download">
+              <span class="checkmark"></span>
+              Auto-download on conversion
+            </label>
+          </div>
+        </section>
+
+        <!-- Action Buttons -->
+        <div class="actions-group">
+          <button class="btn btn-primary" id="btn-convert" disabled>Convert Images</button>
+          <button class="btn btn-secondary" id="btn-download-all" style="display: none;">Download All (.ZIP)</button>
+          <button class="btn btn-danger" id="btn-clear" disabled>Clear File List</button>
+        </div>
+        
+      </div>
+    </aside>
+
+    <!-- RIGHT CONTENT: File List & Drag Drop Workspace -->
+    <section class="workspace-column">
+      
+      <!-- Drag & Drop Interactive Area -->
+      <div class="drag-drop-area" id="drag-drop-area">
+        <span class="upload-icon">☁️</span>
+        <h3 class="upload-primary">Drag & Drop Images (PNG, JPG, BMP, TIFF) or click to browse</h3>
+        <p class="upload-secondary">100% client-side conversion. Your files never leave your device.</p>
+        <input type="file" id="file-input" multiple accept="image/png, image/jpeg, image/jpg, image/bmp, image/tiff" class="hidden-input">
+      </div>
+
+      <!-- Workspace Stack Widget -->
+      <div class="workspace-stack" id="workspace-stack">
+        
+        <!-- Onboarding Empty State (Visible by default) -->
+        <div class="glass-card empty-state-card active" id="empty-state-view">
+          <span class="empty-icon">📥</span>
+          <h2 class="empty-title">No Images Imported</h2>
+          <p class="empty-desc">Drag and drop folders/files above, or click the browse zone to start importing files for conversion.</p>
+          <button class="btn btn-accent" id="btn-import-mock">Select Images...</button>
+        </div>
+
+        <!-- Database-style File List Table (Hidden by default) -->
+        <div class="table-container-view" id="table-view">
+          
+          <!-- Search bar & actions -->
+          <div class="table-header-controls">
+            <input type="text" id="search-input" placeholder="🔍 Search/filter images by name..." class="search-input">
+          </div>
+
+          <!-- Table widget -->
+          <div class="table-wrapper">
+            <table class="database-table" id="files-table">
+              <thead>
+                <tr>
+                  <th style="width: 45%;">File Name</th>
+                  <th style="width: 15%; text-align: center;">Resolution</th>
+                  <th style="width: 15%; text-align: right;">Orig Size</th>
+                  <th style="width: 15%; text-align: right;">WebP Size</th>
+                  <th style="width: 10%; text-align: center;">Status</th>
+                </tr>
+              </thead>
+              <tbody id="files-table-body">
+                <!-- Rows will be injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Linear progress line -->
+          <div class="progress-container" id="progress-container">
+            <div class="progress-bar" id="progress-bar"></div>
+          </div>
+
+          <!-- Bottom stats bar -->
+          <div class="stats-bar" id="stats-bar">
+            <span id="stats-text">Total Selected: 0 image(s) | Total File Size: 0 B</span>
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ==========================================
+       DEVELOPER INFO FOOTER
+       ========================================== -->
+  <footer class="developer-footer" id="DeveloperFooter">
+    <div class="footer-layout">
+      
+      <!-- Footer Card 1: Profile & Motto -->
+      <div class="glass-card footer-card profile-card">
+        <h3 class="footer-card-name">Bilal Faisal Arain</h3>
+        <p class="footer-card-role">Full Stack Developer & Tester</p>
+        <span class="footer-card-motto"><i>Motto: "code, test, deliver, repeat"</i></span>
+      </div>
+
+      <!-- Footer Card 2 & 3: Experience Cards Grid -->
+      <div class="experience-grid">
+        <div class="glass-card footer-card exp-card exp-personal">
+          <span class="exp-val">1 YEAR</span>
+          <p class="exp-desc">Personal Experience<br>Full Stack & QA</p>
+        </div>
+        <div class="glass-card footer-card exp-card exp-professional">
+          <span class="exp-val">5 MONTHS</span>
+          <p class="exp-desc">Professional Experience<br>at CodeCreatives</p>
+        </div>
+      </div>
+
+      <!-- Footer Card 4: Contact Handles & Socials -->
+      <div class="glass-card footer-card contact-card">
+        <h4 class="contact-title">CONNECT & CONTACT</h4>
+        <p class="contact-row">📞 Phone: 0327-2190535  |  ✉️ Email: bilalfaisalarain@gmail.com</p>
+        <p class="contact-row">📸 Instagram: @bilal.faisalarain  |  💻 GitHub: github.com/BilalFaisaldev</p>
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- Web Application Scripts -->
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+{
+  "name": "png_to_webp_converter",
+  "version": "1.0.0",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "vercel": "^54.14.0"
+  }
+}
