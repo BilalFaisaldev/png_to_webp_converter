@@ -620,6 +620,8 @@ function showAuthenticatedApp() {
   
   elements.userDisplayName.textContent = state.user.username;
   elements.userProfileHeader.style.display = 'inline-flex';
+  
+  toggleWorkspaceView('converter');
 }
 
 function showAuthForms() {
@@ -746,6 +748,132 @@ function handleLogout() {
   state.user = null;
   localStorage.removeItem('auth_user');
   showAuthForms();
+}
+
+/* ==========================================================================
+   USER ANALYTICS & DASHBOARD FUNCTIONS
+   ========================================================================== */
+function toggleWorkspaceView(view) {
+  if (view === 'converter') {
+    elements.btnNavConverter.style.backgroundColor = 'var(--accent-primary)';
+    elements.btnNavAnalytics.style.backgroundColor = 'transparent';
+    
+    // Show converter columns
+    document.querySelector('.sidebar-column').style.display = 'flex';
+    elements.dragDropArea.style.display = 'flex';
+    
+    // Show active workspace stack item
+    elements.analyticsView.style.display = 'none';
+    const total = state.filesQueue.length;
+    if (total === 0) {
+      elements.emptyStateView.classList.add('active');
+      elements.tableView.classList.remove('active');
+    } else {
+      elements.emptyStateView.classList.remove('active');
+      elements.tableView.classList.add('active');
+    }
+  } else {
+    elements.btnNavConverter.style.backgroundColor = 'transparent';
+    elements.btnNavAnalytics.style.backgroundColor = 'var(--accent-primary)';
+    
+    // Hide converter columns
+    document.querySelector('.sidebar-column').style.display = 'none';
+    elements.dragDropArea.style.display = 'none';
+    
+    // Show analytics view
+    elements.emptyStateView.classList.remove('active');
+    elements.tableView.classList.remove('active');
+    elements.analyticsView.style.display = 'flex';
+    
+    renderAnalytics();
+  }
+}
+
+function saveBatchToHistory(newEntries) {
+  if (!state.user) return;
+  const historyKey = `history_${state.user.username}`;
+  const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+  
+  newEntries.forEach(entry => {
+    history.unshift({
+      id: entry.id,
+      name: entry.name,
+      originalSize: entry.size,
+      webpSize: entry.webpSize,
+      date: new Date().toLocaleString()
+    });
+  });
+  
+  // Cap history at 100 entries to prevent local storage quota issues
+  if (history.length > 100) {
+    history.length = 100;
+  }
+  
+  localStorage.setItem(historyKey, JSON.stringify(history));
+}
+
+function renderAnalytics() {
+  if (!state.user) return;
+  const historyKey = `history_${state.user.username}`;
+  const history = JSON.parse(localStorage.getItem(historyKey) || '[]');
+  
+  // Calculate totals
+  const totalCount = history.length;
+  let totalSaved = 0;
+  let totalOriginal = 0;
+  
+  history.forEach(item => {
+    totalOriginal += item.originalSize;
+    totalSaved += (item.originalSize - item.webpSize);
+  });
+  
+  const avgRatio = totalOriginal > 0 ? ((totalSaved / totalOriginal) * 100).toFixed(0) : 0;
+  
+  // Update Stats Cards
+  elements.statProcessedCount.textContent = totalCount;
+  elements.statSavedSize.textContent = formatSize(totalSaved);
+  elements.statRatioAvg.textContent = `${avgRatio}%`;
+  
+  // Render History Table
+  elements.historyTableBody.innerHTML = '';
+  
+  if (history.length === 0) {
+    elements.historyTableBody.innerHTML = `
+      <tr>
+        <td colspan="5" style="text-align: center; color: var(--slate-500); padding: 20px;">
+          No conversion history found. Run some conversions to populate stats!
+        </td>
+      </tr>
+    `;
+    return;
+  }
+  
+  history.forEach(item => {
+    const tr = document.createElement('tr');
+    const savingPercent = ((item.originalSize - item.webpSize) / item.originalSize * 100).toFixed(0);
+    
+    tr.innerHTML = `
+      <td>
+        <span class="file-name-txt" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</span>
+      </td>
+      <td style="text-align: center; color: var(--slate-400); font-size: 11px;">${item.date}</td>
+      <td style="text-align: right;" class="size-txt">${formatSize(item.originalSize)}</td>
+      <td style="text-align: right;" class="size-txt">${formatSize(item.webpSize)}</td>
+      <td style="text-align: center;">
+        <span class="ratio-badge" style="margin: 0; padding: 2px 6px;">-${savingPercent}%</span>
+      </td>
+    `;
+    elements.historyTableBody.appendChild(tr);
+  });
+}
+
+function handleClearHistory() {
+  if (!state.user) return;
+  if (confirm('Are you sure you want to clear your conversion history and statistics?')) {
+    const historyKey = `history_${state.user.username}`;
+    localStorage.removeItem(historyKey);
+    renderAnalytics();
+  }
 }
 
 // Start listener
