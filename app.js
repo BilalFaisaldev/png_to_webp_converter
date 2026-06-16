@@ -55,23 +55,16 @@ const elements = {
   userDisplayName: document.getElementById('user-display-name'),
   btnLogout: document.getElementById('btn-logout'),
 
-  // Analytics DOM Elements
-  btnNavConverter: document.getElementById('btn-nav-converter'),
-  btnNavAnalytics: document.getElementById('btn-nav-analytics'),
-  analyticsView: document.getElementById('analytics-view'),
-  statProcessedCount: document.getElementById('stat-processed-count'),
-  statSavedSize: document.getElementById('stat-saved-size'),
-  statRatioAvg: document.getElementById('stat-ratio-avg'),
-  btnClearHistory: document.getElementById('btn-clear-history'),
-  historyTableBody: document.getElementById('history-table-body'),
-
   // Help & Docs Modals
   navLinkDocs: document.getElementById('nav-link-docs'),
   navLinkHelp: document.getElementById('nav-link-help'),
   docsModal: document.getElementById('docs-modal'),
   helpModal: document.getElementById('help-modal'),
   btnCloseDocs: document.getElementById('btn-close-docs'),
-  btnCloseHelp: document.getElementById('btn-close-help')
+  btnCloseHelp: document.getElementById('btn-close-help'),
+  supportForm: document.getElementById('support-form'),
+  supportSuccessMsg: document.getElementById('support-success-msg'),
+  btnResetSupport: document.getElementById('btn-reset-support')
 };
 
 /* ==========================================================================
