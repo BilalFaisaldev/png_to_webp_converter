@@ -11,5 +11,9 @@
   "description": "",
   "devDependencies": {
     "vercel": "^54.14.0"
+  },
+  "dependencies": {
+    "mysql2": "^3.9.2",
+    "bcryptjs": "^2.4.3"
   }
 }
