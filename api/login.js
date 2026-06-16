@@ -1,4 +1,4 @@
-const db = require('./db');
+const db = require('./db_kv');
 const bcrypt = require('bcryptjs');
 
 module.exports = async (req, res) => {
@@ -15,15 +15,15 @@ module.exports = async (req, res) => {
     }
 
     try {
-        // Query user by username or email
-        const query = 'SELECT * FROM users WHERE username = ? OR email = ? LIMIT 1';
-        const [rows] = await db.query(query, [usernameOrEmail.trim(), usernameOrEmail.trim().toLowerCase()]);
-
-        if (rows.length === 0) {
-            return res.status(401).json({ error: 'Invalid username, email, or password.' });
+        // Query user by username first, then email
+        let user = await db.getUserByUsername(usernameOrEmail);
+        if (!user) {
+            user = await db.getUserByEmail(usernameOrEmail);
         }
 
-        const user = rows[0];
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid username, email, or password.' });
+        }
 
         // Compare password hash
         const isMatch = await bcrypt.compare(password, user.password);
@@ -36,14 +36,14 @@ module.exports = async (req, res) => {
             success: true,
             message: 'Login successful!',
             user: {
-                id: user.id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                credits: user.credits
             }
         });
 
     } catch (err) {
         console.error('Login error:', err);
-        return res.status(500).json({ error: 'Internal server error. Database connection might not be configured.' });
+        return res.status(500).json({ error: 'Internal server error during login verification.' });
     }
 };

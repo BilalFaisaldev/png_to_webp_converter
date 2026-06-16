@@ -1,3 +1,5 @@
+const bcrypt = require('bcryptjs');
+
 const APP_KEY = process.env.KV_APP_KEY || '320n85kh';
 const BASE_URL = 'https://keyvalue.immanuel.co/api/KeyVal';
 
@@ -37,8 +39,35 @@ function fromHex(hex) {
   return Buffer.from(hex, 'hex').toString('utf8');
 }
 
+// Track registered usernames in a global index
+async function getUsernamesList() {
+  const hex = await getValue('user_index_list');
+  if (!hex) return [];
+  try {
+    return JSON.parse(fromHex(hex));
+  } catch (e) {
+    return [];
+  }
+}
+
+async function saveUsernamesList(list) {
+  const hex = toHex(JSON.stringify(list));
+  return await setValue('user_index_list', hex);
+}
+
 async function getUserByUsername(username) {
   const cleanUsername = username.trim().toLowerCase();
+  
+  // Auto-seed admin user if requested and not present
+  if (cleanUsername === 'admin') {
+    const hexValue = await getValue('user_admin');
+    if (!hexValue) {
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash('admin1234', salt);
+      await createUser('admin', 'admin@converter.com', hashedPassword, 999999);
+    }
+  }
+
   const hexValue = await getValue(`user_${cleanUsername}`);
   if (!hexValue) return null;
   try {
@@ -56,7 +85,7 @@ async function getUserByEmail(email) {
   return getUserByUsername(username);
 }
 
-async function createUser(username, email, hashedPassword) {
+async function createUser(username, email, hashedPassword, initialCredits = 50) {
   const cleanUsername = username.trim().toLowerCase();
   const cleanEmail = email.trim().toLowerCase();
   const emailHex = toHex(cleanEmail);
@@ -64,7 +93,8 @@ async function createUser(username, email, hashedPassword) {
   const userObj = {
     username: username.trim(),
     email: email.trim(),
-    password: hashedPassword
+    password: hashedPassword,
+    credits: initialCredits
   };
   
   const userHex = toHex(JSON.stringify(userObj));
@@ -74,12 +104,71 @@ async function createUser(username, email, hashedPassword) {
   if (!userStored) return false;
   
   // Store username mapping under email_${emailHex}
-  const emailStored = await setValue(`email_${emailHex}`, cleanUsername);
-  return emailStored;
+  await setValue(`email_${emailHex}`, cleanUsername);
+
+  // Add username to index list
+  const list = await getUsernamesList();
+  if (!list.includes(cleanUsername)) {
+    list.push(cleanUsername);
+    await saveUsernamesList(list);
+  }
+
+  return true;
+}
+
+async function updateUserCredits(username, credits) {
+  const cleanUsername = username.trim().toLowerCase();
+  const userObj = await getUserByUsername(cleanUsername);
+  if (!userObj) return false;
+
+  userObj.credits = parseInt(credits, 10);
+  const userHex = toHex(JSON.stringify(userObj));
+  return await setValue(`user_${cleanUsername}`, userHex);
+}
+
+async function deleteUser(username) {
+  const cleanUsername = username.trim().toLowerCase();
+  const userObj = await getUserByUsername(cleanUsername);
+  if (!userObj) return false;
+
+  // Clear user data (store empty string to represent deletion)
+  await setValue(`user_${cleanUsername}`, '');
+  
+  const emailHex = toHex(userObj.email.trim().toLowerCase());
+  await setValue(`email_${emailHex}`, '');
+
+  // Remove from usernames index
+  let list = await getUsernamesList();
+  list = list.filter(u => u !== cleanUsername);
+  await saveUsernamesList(list);
+
+  return true;
+}
+
+async function getAllUsers() {
+  // Ensure admin is seeded
+  await getUserByUsername('admin');
+
+  const list = await getUsernamesList();
+  const users = [];
+  for (const username of list) {
+    const userObj = await getUserByUsername(username);
+    if (userObj) {
+      users.push({
+        username: userObj.username,
+        email: userObj.email,
+        credits: userObj.credits
+      });
+    }
+  }
+  return users;
 }
 
 module.exports = {
   getUserByUsername,
   getUserByEmail,
-  createUser
+  createUser,
+  updateUserCredits,
+  deleteUser,
+  getAllUsers
 };
