@@ -1,0 +1,12 @@
+# Ignore Python desktop application files from Vercel deployments and Vercel Dev
+main.py
+converter_logic.py
+ui_components.py
+threading_worker.py
+icons_generator.py
+test_converter.py
+requirements.txt
+build_instructions.md
+assets/logo.ico
+assets/logo.png
+__pycache__/
