@@ -572,5 +572,143 @@ function escapeHtml(unsafe) {
     .replace(/'/g, "&#039;");
 }
 
+/* ==========================================================================
+   AUTHENTICATION WORKFLOW FUNCTIONS
+   ========================================================================== */
+function checkAuthSession() {
+  const cachedUser = localStorage.getItem('auth_user');
+  if (cachedUser) {
+    try {
+      state.user = JSON.parse(cachedUser);
+      showAuthenticatedApp();
+    } catch (e) {
+      localStorage.removeItem('auth_user');
+      showAuthForms();
+    }
+  } else {
+    showAuthForms();
+  }
+}
+
+function showAuthenticatedApp() {
+  elements.authContainer.style.display = 'none';
+  elements.dashboardContainer.style.display = 'flex';
+  elements.developerFooter.style.display = 'block';
+  
+  elements.userDisplayName.textContent = state.user.username;
+  elements.userProfileHeader.style.display = 'inline-flex';
+}
+
+function showAuthForms() {
+  elements.authContainer.style.display = 'flex';
+  elements.dashboardContainer.style.display = 'none';
+  elements.developerFooter.style.display = 'none';
+  elements.userProfileHeader.style.display = 'none';
+}
+
+function toggleAuthTabs(mode) {
+  if (mode === 'login') {
+    elements.tabLogin.classList.add('active');
+    elements.tabSignup.classList.remove('active');
+    elements.loginForm.style.display = 'flex';
+    elements.signupForm.style.display = 'none';
+  } else {
+    elements.tabLogin.classList.remove('active');
+    elements.tabSignup.classList.add('active');
+    elements.loginForm.style.display = 'none';
+    elements.signupForm.style.display = 'flex';
+  }
+  // Clear any existing errors/successes
+  elements.loginError.style.display = 'none';
+  elements.signupError.style.display = 'none';
+  elements.signupSuccess.style.display = 'none';
+}
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  elements.loginError.style.display = 'none';
+  
+  const usernameOrEmail = document.getElementById('login-username').value;
+  const password = document.getElementById('login-password').value;
+  const submitBtn = elements.loginForm.querySelector('button[type="submit"]');
+  
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Logging in...';
+  
+  try {
+    const response = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usernameOrEmail, password })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Authentication failed.');
+    }
+    
+    // Save state and local storage
+    state.user = data.user;
+    localStorage.setItem('auth_user', JSON.stringify(data.user));
+    
+    // Reset form & show dashboard
+    elements.loginForm.reset();
+    showAuthenticatedApp();
+    
+  } catch (err) {
+    elements.loginError.textContent = err.message;
+    elements.loginError.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Log In';
+  }
+}
+
+async function handleSignupSubmit(e) {
+  e.preventDefault();
+  elements.signupError.style.display = 'none';
+  elements.signupSuccess.style.display = 'none';
+  
+  const username = document.getElementById('signup-username').value;
+  const email = document.getElementById('signup-email').value;
+  const password = document.getElementById('signup-password').value;
+  const submitBtn = elements.signupForm.querySelector('button[type="submit"]');
+  
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Creating account...';
+  
+  try {
+    const response = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, email, password })
+    });
+    
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error || 'Registration failed.');
+    }
+    
+    elements.signupSuccess.textContent = 'Account created! Please switch to Login tab to log in.';
+    elements.signupSuccess.style.display = 'block';
+    elements.signupForm.reset();
+    
+  } catch (err) {
+    elements.signupError.textContent = err.message;
+    elements.signupError.style.display = 'block';
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Create Account';
+  }
+}
+
+function handleLogout() {
+  state.user = null;
+  localStorage.removeItem('auth_user');
+  showAuthForms();
+}
+
 // Start listener
 window.addEventListener('DOMContentLoaded', initEvents);
