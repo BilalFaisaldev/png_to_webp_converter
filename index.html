@@ -51,13 +51,13 @@
       <div class="auth-header">
         <span class="auth-logo">⚡</span>
         <h2>Welcome to Image to WebP</h2>
-        <p>Please log in or sign up to use the bulk image converter.</p>
+        <p>Please log in or request access to use the bulk image converter.</p>
       </div>
 
       <!-- Auth Switch Tabs -->
       <div class="segmented-control auth-tabs" id="auth-tabs">
         <button class="segment-btn active" id="tab-login">Login</button>
-        <button class="segment-btn" id="tab-signup">Sign Up</button>
+        <button class="segment-btn" id="tab-signup">Request Access</button>
       </div>
 
       <!-- Login Form -->
@@ -74,23 +74,32 @@
         <button type="submit" class="btn btn-primary">Log In</button>
       </form>
 
-      <!-- Signup Form -->
+      <!-- Request Access Form -->
       <form class="auth-form" id="signup-form" style="display: none;">
         <div class="form-group">
-          <label for="signup-username">Username</label>
-          <input type="text" id="signup-username" placeholder="Choose username" required class="search-input">
+          <label for="req-name">Your Full Name</label>
+          <input type="text" id="req-name" placeholder="Enter your full name" required class="search-input">
         </div>
         <div class="form-group">
-          <label for="signup-email">Email Address</label>
-          <input type="email" id="signup-email" placeholder="Enter email address" required class="search-input">
+          <label for="req-email">Email Address</label>
+          <input type="email" id="req-email" placeholder="Enter your email address" required class="search-input">
         </div>
         <div class="form-group">
-          <label for="signup-password">Password</label>
-          <input type="password" id="signup-password" placeholder="Min. 6 characters" required class="search-input">
+          <label for="req-whatsapp">WhatsApp Number</label>
+          <input type="tel" id="req-whatsapp" placeholder="e.g. 03001234567" required class="search-input">
+        </div>
+        <div class="form-group">
+          <label for="req-credits">Requested Conversions / Credits</label>
+          <select id="req-credits" class="search-input" style="background: var(--input-bg); color: #fff; border: 1px solid var(--glass-border); width: 100%; border-radius: 8px; padding: 10px 14px;" required>
+            <option value="50">50 Free Conversions</option>
+            <option value="100">100 Conversions</option>
+            <option value="200">200 Conversions</option>
+            <option value="500">500 Conversions</option>
+          </select>
         </div>
         <div class="error-msg" id="signup-error" style="display: none;"></div>
         <div class="success-msg" id="signup-success" style="display: none;"></div>
-        <button type="submit" class="btn btn-primary">Create Account</button>
+        <button type="submit" class="btn btn-primary">Send WhatsApp Request 🚀</button>
       </form>
     </div>
   </div>
