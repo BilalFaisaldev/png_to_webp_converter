@@ -38,8 +38,6 @@
       <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light theme (mock)">🌙</button>
       <div id="user-profile-header" style="display: none; align-items: center; gap: 8px; margin-left: 10px;">
         <span id="user-display-name" style="color: #818cf8; font-weight: 700; margin-right: 8px;"></span>
-        <button class="btn btn-secondary" id="btn-nav-converter" style="padding: 4px 10px; font-size: 11px; width: auto; background-color: var(--accent-primary);">🔄 Converter</button>
-        <button class="btn btn-secondary" id="btn-nav-analytics" style="padding: 4px 10px; font-size: 11px; width: auto;">📊 Analytics</button>
         <button class="btn btn-danger" id="btn-logout" style="padding: 4px 10px; font-size: 11px; width: auto; margin-left: 5px;">Logout</button>
       </div>
     </div>
@@ -217,61 +215,6 @@
           </div>
 
         </div>
-        
-        <!-- User Analytics & History Panel (Hidden by default) -->
-        <div class="analytics-view" id="analytics-view" style="display: none; flex-direction: column; gap: 20px; width: 100%;">
-          <!-- Top Stats Dashboard Grid -->
-          <div class="stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; width: 100%;">
-            <div class="glass-card stat-card" style="padding: 16px; display: flex; align-items: center; gap: 16px;">
-              <span class="stat-icon" style="font-size: 32px;">🖼️</span>
-              <div class="stat-content">
-                <span class="stat-val" id="stat-processed-count" style="font-size: 20px; font-weight: 800; color: #fff; display: block;">0</span>
-                <p class="stat-label" style="color: var(--slate-400); font-size: 11px; font-weight: 600; text-transform: uppercase;">Total Optimized</p>
-              </div>
-            </div>
-            
-            <div class="glass-card stat-card" style="padding: 16px; display: flex; align-items: center; gap: 16px;">
-              <span class="stat-icon" style="font-size: 32px;">💾</span>
-              <div class="stat-content">
-                <span class="stat-val" id="stat-saved-size" style="font-size: 20px; font-weight: 800; color: #10b981; display: block;">0 KB</span>
-                <p class="stat-label" style="color: var(--slate-400); font-size: 11px; font-weight: 600; text-transform: uppercase;">Storage Saved</p>
-              </div>
-            </div>
-
-            <div class="glass-card stat-card" style="padding: 16px; display: flex; align-items: center; gap: 16px;">
-              <span class="stat-icon" style="font-size: 32px;">📈</span>
-              <div class="stat-content">
-                <span class="stat-val" id="stat-ratio-avg" style="font-size: 20px; font-weight: 800; color: #818cf8; display: block;">0%</span>
-                <p class="stat-label" style="color: var(--slate-400); font-size: 11px; font-weight: 600; text-transform: uppercase;">Avg. Space Saved</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- History Section Header -->
-          <div class="history-section-header" style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
-            <h3 style="color: #fff; font-weight: 700; font-size: 14px;">Recent Conversion History</h3>
-            <button class="btn btn-danger" id="btn-clear-history" style="padding: 6px 12px; font-size: 11px; width: auto; display: inline-flex; align-items: center; gap: 4px;">🗑️ Clear History</button>
-          </div>
-
-          <!-- History Table wrapper -->
-          <div class="table-wrapper">
-            <table class="database-table" id="history-table">
-              <thead>
-                <tr>
-                  <th style="width: 45%;">File Name</th>
-                  <th style="width: 25%; text-align: center;">Conversion Date</th>
-                  <th style="width: 15%; text-align: right;">Original Size</th>
-                  <th style="width: 15%; text-align: right;">WebP Size</th>
-                  <th style="width: 10%; text-align: center;">Savings</th>
-                </tr>
-              </thead>
-              <tbody id="history-table-body">
-                <!-- Log rows will be dynamically injected here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
       </div>
 
     </section>
