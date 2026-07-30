@@ -28,3 +28,8 @@ Desktop.ini
 
 # Sync log file
 .git-sync.log
+
+# Local data & temporary test scripts
+.data/
+test_auth.js
+

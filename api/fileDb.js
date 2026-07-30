@@ -1,0 +1,133 @@
+const fs = require('fs');
+const path = require('path');
+
+const DATA_DIR = path.join(__dirname, '..', '.data');
+const USERS_FILE = path.join(DATA_DIR, 'users.json');
+
+function ensureDataFile() {
+  if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  }
+  if (!fs.existsSync(USERS_FILE)) {
+    fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2));
+  }
+}
+
+function readUsers() {
+  ensureDataFile();
+  try {
+    const data = fs.readFileSync(USERS_FILE, 'utf8');
+    return JSON.parse(data || '[]');
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveUsers(users) {
+  ensureDataFile();
+  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+}
+
+async function findUser({ username, email, id }) {
+  const users = readUsers();
+  return users.find(u => {
+    if (id && (u._id === id || u.id === id)) return true;
+    if (username && u.username.toLowerCase() === username.toLowerCase()) return true;
+    if (email && u.email.toLowerCase() === email.toLowerCase()) return true;
+    return false;
+  }) || null;
+}
+
+async function createUser({ username, email, password, role = 'user', credits = 50, isVerified = false, otpCode = null, otpExpires = null }) {
+  const users = readUsers();
+  const newUser = {
+    _id: 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+    username: username.trim().toLowerCase(),
+    email: email.trim().toLowerCase(),
+    password,
+    role,
+    credits: parseInt(credits, 10) || 50,
+    isVerified,
+    otpCode,
+    otpExpires: otpExpires ? new Date(otpExpires).toISOString() : null,
+    createdAt: new Date().toISOString()
+  };
+  users.push(newUser);
+  saveUsers(users);
+  return newUser;
+}
+
+async function setOTP(username, otpCode, expiresMs = 600000) {
+  const users = readUsers();
+  const cleanUsername = username.trim().toLowerCase();
+  const user = users.find(u => u.username === cleanUsername);
+  if (!user) return null;
+  user.otpCode = otpCode;
+  user.otpExpires = new Date(Date.now() + expiresMs).toISOString();
+  saveUsers(users);
+  return user;
+}
+
+async function verifyOTP(username, otpCode) {
+  const users = readUsers();
+  const cleanUsername = username.trim().toLowerCase();
+  const user = users.find(u => u.username === cleanUsername);
+  if (!user) return { success: false, reason: 'User not found.' };
+
+  if (!user.otpCode || user.otpCode !== otpCode.trim()) {
+    return { success: false, reason: 'Invalid verification code.' };
+  }
+
+  if (user.otpExpires && new Date(user.otpExpires) < new Date()) {
+    return { success: false, reason: 'Verification code has expired. Please request a new code.' };
+  }
+
+  user.isVerified = true;
+  user.otpCode = null;
+  user.otpExpires = null;
+  saveUsers(users);
+  return { success: true, user };
+}
+
+async function updateUserCredits(username, credits) {
+  const users = readUsers();
+  const cleanUsername = username.trim().toLowerCase();
+  const user = users.find(u => u.username === cleanUsername);
+  if (!user) return null;
+  user.credits = parseInt(credits, 10);
+  saveUsers(users);
+  return user;
+}
+
+async function deleteUser(username) {
+  let users = readUsers();
+  const cleanUsername = username.trim().toLowerCase();
+  const initialLength = users.length;
+  users = users.filter(u => u.username !== cleanUsername);
+  if (users.length === initialLength) return false;
+  saveUsers(users);
+  return true;
+}
+
+async function getAllUsers() {
+  const users = readUsers();
+  return users.map(u => ({
+    _id: u._id,
+    username: u.username,
+    email: u.email,
+    role: u.role,
+    credits: u.credits,
+    isVerified: !!u.isVerified,
+    createdAt: u.createdAt
+  }));
+}
+
+module.exports = {
+  findUser,
+  createUser,
+  setOTP,
+  verifyOTP,
+  updateUserCredits,
+  deleteUser,
+  getAllUsers
+};

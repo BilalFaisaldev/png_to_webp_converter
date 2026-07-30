@@ -15,6 +15,9 @@
   <!-- Main Stylesheet -->
   <link rel="stylesheet" href="style.css">
   
+  <!-- Google Identity Services SDK -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  
   <!-- JSZip CDN for packing converted images client-side -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" referrerpolicy="no-referrer"></script>
 </head>
@@ -34,12 +37,15 @@
       </div>
     </div>
     <div class="nav-right">
+      <a href="#" class="nav-link" id="nav-link-pricing" title="Pricing Plans">Pricing</a>
+      <a href="#" class="nav-link" id="nav-link-api" title="Developer API">API Keys</a>
       <a href="#" class="nav-link" id="nav-link-docs" title="Documentation">Docs</a>
       <a href="#" class="nav-link" id="nav-link-help" title="Help Center">Help</a>
       <button class="theme-toggle" id="theme-toggle" title="Toggle dark/light theme (mock)">🌙</button>
       <div id="user-profile-header" style="display: none; align-items: center; gap: 8px; margin-left: 10px;">
         <span class="badge" id="navbar-credits" style="background-color: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.25); font-weight: 800; font-size: 10px; text-transform: uppercase;">Credits: 50</span>
         <span id="user-display-name" style="color: #818cf8; font-weight: 700; margin-right: 8px;"></span>
+        <button class="btn btn-accent" id="btn-admin-portal" style="display: none; padding: 4px 10px; font-size: 11px; width: auto; background: linear-gradient(135deg, #f59e0b, #ec4899); border: none; font-weight: 800; margin-right: 4px;">👑 Admin Panel</button>
         <button class="btn btn-danger" id="btn-logout" style="padding: 4px 10px; font-size: 11px; width: auto; margin-left: 5px;">Logout</button>
       </div>
     </div>
@@ -59,7 +65,7 @@
       <!-- Auth Switch Tabs -->
       <div class="segmented-control auth-tabs" id="auth-tabs">
         <button class="segment-btn active" id="tab-login">Login</button>
-        <button class="segment-btn" id="tab-signup">Request Access</button>
+        <button class="segment-btn" id="tab-signup">Register Account</button>
       </div>
 
       <!-- Login Form -->
@@ -71,27 +77,44 @@
         <div class="form-group">
           <label for="login-password">Password</label>
           <input type="password" id="login-password" placeholder="Enter password" required class="search-input">
+          <div style="text-align: right; margin-top: 4px;">
+            <a href="#" id="link-forgot-password" style="color: #818cf8; font-size: 11px; text-decoration: none;">Forgot Password?</a>
+          </div>
         </div>
         <div class="error-msg" id="login-error" style="display: none;"></div>
         <button type="submit" class="btn btn-primary">Log In</button>
+
+        <div style="display: flex; align-items: center; margin: 14px 0; gap: 10px; opacity: 0.6;">
+          <hr style="flex: 1; border: 0; border-top: 1px solid var(--glass-border);">
+          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">or continue with</span>
+          <hr style="flex: 1; border: 0; border-top: 1px solid var(--glass-border);">
+        </div>
+        <button type="button" class="btn btn-secondary btn-google-login" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          Sign in with Google
+        </button>
       </form>
 
-      <!-- Request Access Form -->
+      <!-- Registration Form -->
       <form class="auth-form" id="signup-form" style="display: none;">
         <div class="form-group">
-          <label for="req-name">Your Full Name</label>
-          <input type="text" id="req-name" placeholder="Enter your full name" required class="search-input">
+          <label for="req-name">Username</label>
+          <input type="text" id="req-name" placeholder="Choose a username" required class="search-input">
         </div>
         <div class="form-group">
           <label for="req-email">Email Address</label>
           <input type="email" id="req-email" placeholder="Enter your email address" required class="search-input">
         </div>
         <div class="form-group">
-          <label for="req-whatsapp">WhatsApp Number</label>
-          <input type="tel" id="req-whatsapp" placeholder="e.g. 03001234567" required class="search-input">
+          <label for="req-password">Password</label>
+          <input type="password" id="req-password" placeholder="Choose a secure password" required class="search-input">
         </div>
         <div class="form-group">
-          <label for="req-credits">Requested Conversions / Credits</label>
+          <label for="req-whatsapp">WhatsApp Number (Optional)</label>
+          <input type="tel" id="req-whatsapp" placeholder="e.g. 03001234567" class="search-input">
+        </div>
+        <div class="form-group">
+          <label for="req-credits">Initial Conversions / Credits</label>
           <select id="req-credits" class="search-input" style="background: var(--input-bg); color: #fff; border: 1px solid var(--glass-border); width: 100%; border-radius: 8px; padding: 10px 14px;" required>
             <option value="50">50 Free Conversions</option>
             <option value="100">100 Conversions</option>
@@ -101,7 +124,79 @@
         </div>
         <div class="error-msg" id="signup-error" style="display: none;"></div>
         <div class="success-msg" id="signup-success" style="display: none;"></div>
-        <button type="submit" class="btn btn-primary">Send WhatsApp Request 🚀</button>
+        <button type="submit" class="btn btn-primary">Create Account 🚀</button>
+
+        <div style="display: flex; align-items: center; margin: 14px 0; gap: 10px; opacity: 0.6;">
+          <hr style="flex: 1; border: 0; border-top: 1px solid var(--glass-border);">
+          <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">or continue with</span>
+          <hr style="flex: 1; border: 0; border-top: 1px solid var(--glass-border);">
+        </div>
+        <button type="button" class="btn btn-secondary btn-google-signup" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-weight: 600;">
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+          Sign up with Google
+        </button>
+      </form>
+
+      <!-- OTP Verification Form -->
+      <form class="auth-form" id="otp-form" style="display: none;">
+        <div style="text-align: center; margin-bottom: 12px;">
+          <span style="font-size: 28px;">📩</span>
+          <h3 style="color: #fff; margin: 4px 0 2px 0;">Verify Your Email</h3>
+          <p style="font-size: 11px; color: var(--slate-400); margin: 0;">We sent a 6-digit code to <strong id="otp-email-display" style="color: #818cf8;">your email</strong></p>
+        </div>
+        <div class="form-group">
+          <label for="otp-code-input">6-Digit Verification Code</label>
+          <input type="text" id="otp-code-input" maxlength="6" placeholder="e.g. 123456" required class="search-input" style="letter-spacing: 6px; font-size: 18px; text-align: center; font-weight: 700;">
+        </div>
+        <div class="error-msg" id="otp-error" style="display: none;"></div>
+        <div class="success-msg" id="otp-success" style="display: none;"></div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Verify & Activate Account</button>
+        <div style="text-align: center; margin-top: 12px; font-size: 11px;">
+          <span style="color: var(--slate-500);">Didn't receive code?</span>
+          <button type="button" id="btn-resend-otp" class="btn btn-secondary" style="display: inline-block; width: auto; padding: 2px 8px; font-size: 10px; margin-left: 6px;">Resend Code</button>
+        </div>
+      </form>
+
+      <!-- Forgot Password Request Form -->
+      <form class="auth-form" id="forgot-form" style="display: none;">
+        <div style="text-align: center; margin-bottom: 12px;">
+          <span style="font-size: 28px;">🔑</span>
+          <h3 style="color: #fff; margin: 4px 0 2px 0;">Reset Your Password</h3>
+          <p style="font-size: 11px; color: var(--slate-400); margin: 0;">Enter your username or email address to receive a 6-digit reset code in your inbox.</p>
+        </div>
+        <div class="form-group">
+          <label for="forgot-username">Username or Email</label>
+          <input type="text" id="forgot-username" placeholder="Enter username or email" required class="search-input">
+        </div>
+        <div class="error-msg" id="forgot-error" style="display: none;"></div>
+        <div class="success-msg" id="forgot-success" style="display: none;"></div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 8px;">Send Reset Code 📩</button>
+        <div style="text-align: center; margin-top: 12px;">
+          <a href="#" class="link-back-login" style="color: var(--slate-400); font-size: 11px; text-decoration: none;">← Back to Login</a>
+        </div>
+      </form>
+
+      <!-- New Password Reset Form -->
+      <form class="auth-form" id="reset-form" style="display: none;">
+        <div style="text-align: center; margin-bottom: 12px;">
+          <span style="font-size: 28px;">🔒</span>
+          <h3 style="color: #fff; margin: 4px 0 2px 0;">Create New Password</h3>
+          <p style="font-size: 11px; color: var(--slate-400); margin: 0;">Enter the 6-digit code sent to your email and your new password.</p>
+        </div>
+        <div class="form-group">
+          <label for="reset-otp-input">6-Digit Reset Code</label>
+          <input type="text" id="reset-otp-input" maxlength="6" placeholder="e.g. 123456" required class="search-input" style="letter-spacing: 6px; font-size: 18px; text-align: center; font-weight: 700;">
+        </div>
+        <div class="form-group">
+          <label for="reset-new-password">New Secure Password</label>
+          <input type="password" id="reset-new-password" placeholder="At least 6 characters" required class="search-input">
+        </div>
+        <div class="error-msg" id="reset-error" style="display: none;"></div>
+        <div class="success-msg" id="reset-success" style="display: none;"></div>
+        <button type="submit" class="btn btn-primary" style="margin-top: 8px;">Update Password 🚀</button>
+        <div style="text-align: center; margin-top: 12px;">
+          <a href="#" class="link-back-login" style="color: var(--slate-400); font-size: 11px; text-decoration: none;">← Back to Login</a>
+        </div>
       </form>
     </div>
   </div>
@@ -314,7 +409,12 @@
         <h4 class="contact-title">CONNECT & CONTACT</h4>
         <p class="contact-row">📞 Phone: 0327-2190535  |  ✉️ Email: bilalfaisalarain@gmail.com</p>
         <p class="contact-row">📸 Instagram: @bilal.faisalarain  |  💻 GitHub: github.com/BilalFaisaldev</p>
-        <!-- ==========================================
+      </div>
+
+    </div>
+  </footer>
+
+  <!-- ==========================================
        DOCUMENTATION MODAL
        ========================================== -->
   <div class="modal-overlay" id="docs-modal" style="display: none;">
@@ -337,22 +437,29 @@
           <div class="doc-step">
             <span class="step-num">1</span>
             <div class="step-content">
-              <strong>Import Images</strong>
-              <p>Drag and drop folders/files (PNG, JPG, BMP, TIFF) directly into the upload dropzone, or click to browse files from your computer.</p>
+              <strong>Account & Credits</strong>
+              <p>Register a free account or log in with your credentials. New accounts receive initial free conversion credits.</p>
             </div>
           </div>
           <div class="doc-step">
             <span class="step-num">2</span>
             <div class="step-content">
-              <strong>Adjust Conversion Settings</strong>
-              <p>Select **Lossy** (optimized size) or **Lossless** (original quality). Tune the Quality Factor slider (we recommend 80-85% for general web use).</p>
+              <strong>Import Images</strong>
+              <p>Drag & drop PNG, JPG, JPEG, BMP, or TIFF images into the dropzone or click to browse files from your device.</p>
             </div>
           </div>
           <div class="doc-step">
             <span class="step-num">3</span>
             <div class="step-content">
+              <strong>Configure Settings</strong>
+              <p>Select **Lossy** (maximum file compression) or **Lossless** (pixel-perfect quality), and set the Quality factor slider.</p>
+            </div>
+          </div>
+          <div class="doc-step">
+            <span class="step-num">4</span>
+            <div class="step-content">
               <strong>Convert & Export</strong>
-              <p>Click "Convert Images" to run client-side rendering. Download your images individually or bundle them as a single ZIP archive.</p>
+              <p>Click "Convert Images" to start processing. Download files individually or package them into a single ZIP archive.</p>
             </div>
           </div>
         </div>
@@ -370,23 +477,23 @@
             <tbody>
               <tr>
                 <td><strong>Lossy Mode</strong></td>
-                <td>Aggressively reduces details invisible to the human eye.</td>
-                <td>Websites, blogs, & speed loading.</td>
+                <td>Compresses image size significantly using WebP lossy encoding.</td>
+                <td>Websites, speed optimization, and blogs.</td>
               </tr>
               <tr>
                 <td><strong>Lossless Mode</strong></td>
-                <td>Retains every single pixel exactly as the original.</td>
-                <td>Logos, high-res designs & archiving.</td>
+                <td>Preserves exact original image pixels with WebP compression.</td>
+                <td>Logos, graphic design assets, & archiving.</td>
               </tr>
               <tr>
                 <td><strong>Transparency</strong></td>
-                <td>Preserves alpha transparency masks. Disabling uses white fallback.</td>
-                <td>Transparent background PNGs.</td>
+                <td>Retains alpha transparency layers intact. Disabling uses white fallback.</td>
+                <td>Transparent background PNG logos.</td>
               </tr>
               <tr>
                 <td><strong>ZIP Mode</strong></td>
-                <td>Combines converted outputs into a single zip file.</td>
-                <td>Bulk batch processing (10+ images).</td>
+                <td>Bundles all converted WebP files into a downloadable .zip package.</td>
+                <td>Bulk batch conversions.</td>
               </tr>
             </tbody>
           </table>
@@ -395,12 +502,12 @@
         <!-- Tab 3: Security & Engine -->
         <div class="modal-pane" id="tab-docs-tech">
           <div class="tech-card">
-            <h4>🔒 100% Secure Client-Side Conversion</h4>
-            <p>Your files are never transmitted to any external server. We utilize the HTML5 Canvas context and local memory sandbox to generate WebP image streams directly in your browser. This enables offline conversions and guarantees strict data confidentiality.</p>
+            <h4>🔒 Client-Side Conversion Security</h4>
+            <p>Your uploaded files never leave your computer. Image rendering and WebP conversion run 100% inside your browser's HTML5 Canvas sandbox for complete privacy.</p>
           </div>
           <div class="tech-card" style="margin-top: 10px;">
-            <h4>⚡ Zero Dependencies Backend</h4>
-            <p>Our app runs entirely without server-side processing. All sessions (signup/login) and conversion state tracking run dynamically on top of client `localStorage` endpoints.</p>
+            <h4>⚡ Hybrid Database Backend & JWT</h4>
+            <p>Authentication and credits tracking run on a high-performance Node.js API backed by MongoDB and JWT tokens, with local database fallbacks.</p>
           </div>
         </div>
       </div>
@@ -476,6 +583,310 @@
           Direct Helpline: <strong>0327-2190535</strong> | Email: <strong>bilalfaisalarain@gmail.com</strong>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       GOOGLE OAUTH SIGN-IN MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="google-modal" style="display: none;">
+    <div class="glass-card modal-card" style="max-width: 420px; text-align: center; border: 1px solid rgba(66, 133, 244, 0.3);">
+      <div style="display: flex; justify-content: flex-end;">
+        <button class="modal-close" id="btn-close-google">&times;</button>
+      </div>
+      <div style="margin-bottom: 16px;">
+        <svg width="42" height="42" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/></svg>
+        <h3 style="color: #fff; margin: 10px 0 4px 0; font-size: 18px; font-weight: 700;">Sign in with Google</h3>
+        <p style="color: var(--slate-400); font-size: 12px; margin: 0;">Choose a Google account to continue to Image to WebP</p>
+      </div>
+
+      <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid var(--glass-border); border-radius: 10px; padding: 14px; margin-bottom: 14px; text-align: left;">
+        <label for="google-email-input" style="font-size: 11px; color: var(--slate-300); font-weight: 600; display: block; margin-bottom: 6px;">Your Google Account Email</label>
+        <input type="email" id="google-email-input" value="bilalfaisalarain@gmail.com" placeholder="e.g. name@gmail.com" class="search-input" style="background: rgba(0,0,0,0.3); color: #fff; width: 100%; border: 1px solid var(--glass-border); padding: 10px 12px; border-radius: 8px; font-weight: 600;">
+      </div>
+
+      <button type="button" id="btn-confirm-google-auth" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #4285F4, #34A853); font-weight: 700; padding: 12px; font-size: 14px;">
+        Continue with Google 🚀
+      </button>
+
+      <p style="font-size: 10px; color: var(--slate-500); margin-top: 12px;">
+        By continuing, Google shares your verified name, email address, and profile picture with Image to WebP SaaS.
+      </p>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       PRICING & SUBSCRIPTION MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="pricing-modal" style="display: none;">
+    <div class="glass-card modal-card" style="max-width: 780px;">
+      <div class="modal-header">
+        <h2>💎 SaaS Subscriptions & Credit Top-Ups</h2>
+        <button class="modal-close" id="btn-close-pricing">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--slate-300); font-size: 13px; text-align: center; margin-bottom: 20px;">
+          Choose a plan or buy top-up credits to unlock high-speed batch conversions and Developer API keys.
+        </p>
+
+        <!-- Pricing Cards Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px;">
+          <!-- Free Plan -->
+          <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <span class="badge" style="background: rgba(255,255,255,0.1); color: #fff;">STARTER</span>
+              <h3 style="color: #fff; margin: 12px 0 4px 0; font-size: 24px; font-weight: 800;">Free</h3>
+              <p style="color: var(--slate-400); font-size: 12px; margin-bottom: 16px;">$0 / month forever</p>
+              <ul style="text-align: left; font-size: 12px; color: var(--slate-300); padding-left: 16px; margin-bottom: 20px; line-height: 1.8;">
+                <li>50 Free Credits / month</li>
+                <li>Standard conversion speed</li>
+                <li>ZIP & Individual downloads</li>
+                <li>100% Client-side privacy</li>
+              </ul>
+            </div>
+            <button class="btn btn-secondary" disabled style="width: 100%;">Current Plan</button>
+          </div>
+
+          <!-- Pro Plan -->
+          <div style="background: rgba(99, 102, 241, 0.08); border: 1px solid rgba(99, 102, 241, 0.4); border-radius: 12px; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; position: relative;">
+            <span class="badge" style="position: absolute; top: -10px; right: 16px; background: #6366f1; color: #fff; font-weight: 800;">POPULAR</span>
+            <div>
+              <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: #818cf8;">PRO SAAS</span>
+              <h3 style="color: #fff; margin: 12px 0 4px 0; font-size: 24px; font-weight: 800;">$9 <span style="font-size: 12px; color: var(--slate-400);">/ mo</span></h3>
+              <p style="color: var(--slate-400); font-size: 12px; margin-bottom: 16px;">For Creators & Freelancers</p>
+              <ul style="text-align: left; font-size: 12px; color: var(--slate-300); padding-left: 16px; margin-bottom: 20px; line-height: 1.8;">
+                <li><strong>2,500 Credits</strong> / month</li>
+                <li>Priority parallel workers</li>
+                <li>Custom WebP quality profiles</li>
+                <li>Priority Email Support</li>
+              </ul>
+            </div>
+            <button type="button" class="btn btn-primary btn-buy-plan" data-plan="pro" style="width: 100%; background: linear-gradient(135deg, #6366f1, #818cf8);">Upgrade to Pro ⚡</button>
+          </div>
+
+          <!-- Business Plan -->
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 20px; text-align: center; display: flex; flex-direction: column; justify-content: space-between;">
+            <div>
+              <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: #10b981;">BUSINESS</span>
+              <h3 style="color: #fff; margin: 12px 0 4px 0; font-size: 24px; font-weight: 800;">$29 <span style="font-size: 12px; color: var(--slate-400);">/ mo</span></h3>
+              <p style="color: var(--slate-400); font-size: 12px; margin-bottom: 16px;">For Agencies & Dev Teams</p>
+              <ul style="text-align: left; font-size: 12px; color: var(--slate-300); padding-left: 16px; margin-bottom: 20px; line-height: 1.8;">
+                <li><strong>10,000 Credits</strong> / month</li>
+                <li><strong>Developer API Access</strong></li>
+                <li>Dedicated 24/7 Helpline</li>
+                <li>Custom Branding Options</li>
+              </ul>
+            </div>
+            <button type="button" class="btn btn-primary btn-buy-plan" data-plan="business" style="width: 100%; background: linear-gradient(135deg, #10b981, #059669);">Get Business 🚀</button>
+          </div>
+        </div>
+
+        <!-- Top-up Credits Banner -->
+        <div style="margin-top: 20px; padding: 16px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--glass-border); border-radius: 10px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <strong style="color: #fff; font-size: 13px; display: block;">🪙 Need a Quick Credit Top-Up?</strong>
+            <span style="font-size: 11px; color: var(--slate-400);">Add 500 extra credits to your current account balance for just $5.</span>
+          </div>
+          <button type="button" class="btn btn-accent btn-buy-plan" data-plan="credits_500" style="padding: 8px 16px; font-size: 12px; width: auto;">Buy 500 Credits ($5)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       DEVELOPER API KEY MANAGEMENT MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="api-key-modal" style="display: none;">
+    <div class="glass-card modal-card" style="max-width: 520px;">
+      <div class="modal-header">
+        <h2>🔑 Developer API Key Access</h2>
+        <button class="modal-close" id="btn-close-api">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p style="color: var(--slate-300); font-size: 12px; margin-bottom: 16px;">
+          Integrate automatic WebP image conversion into your web & mobile applications using our REST API endpoint:
+          <code style="background: rgba(0,0,0,0.4); padding: 2px 6px; border-radius: 4px; color: #818cf8;">POST /api/v1/convert</code>
+        </p>
+
+        <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 10px; padding: 16px; margin-bottom: 16px;">
+          <label style="font-size: 11px; color: var(--slate-400); font-weight: 600; display: block; margin-bottom: 6px;">Your Secret API Key</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="api-key-display" readonly value="No API Key generated yet." class="search-input" style="font-family: monospace; font-size: 12px; flex: 1;">
+            <button type="button" id="btn-copy-api-key" class="btn btn-secondary" style="width: auto; padding: 6px 12px; font-size: 11px;">Copy Key</button>
+          </div>
+        </div>
+
+        <button type="button" id="btn-generate-api-key" class="btn btn-primary" style="width: 100%;">Generate New API Key 🚀</button>
+
+        <div style="margin-top: 16px; font-size: 11px; color: var(--slate-400); background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px;">
+          <strong>Example cURL Usage:</strong>
+          <pre style="background: rgba(0,0,0,0.5); padding: 8px; border-radius: 6px; color: #10b981; margin-top: 6px; overflow-x: auto; font-size: 10px;">curl -X POST http://localhost:5000/api/v1/convert \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -F "image=@photo.png"</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       REAL PAYMENT CHECKOUT METHOD MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="checkout-method-modal" style="display: none;">
+    <div class="glass-card modal-card" style="max-width: 540px;">
+      <div class="modal-header">
+        <h2 id="checkout-modal-title">💳 Complete Payment Checkout</h2>
+        <button class="modal-close" id="btn-close-checkout-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between;">
+          <span style="font-size: 12px; color: var(--slate-300);">Selected Package:</span>
+          <strong id="checkout-selected-plan-name" style="color: #10b981; font-size: 14px;">Pro Plan ($9/mo - +2,500 Credits)</strong>
+        </div>
+
+        <!-- Payment Method Tabs / Options -->
+        <div style="display: flex; gap: 10px; margin-bottom: 16px;">
+          <button type="button" class="btn btn-secondary active-payment-tab" id="tab-payment-card" style="flex: 1; border-color: #6366f1; background: rgba(99,102,241,0.15);">
+            💳 Credit / Debit Card
+          </button>
+          <button type="button" class="btn btn-secondary" id="tab-payment-local" style="flex: 1;">
+            📱 JazzCash / EasyPaisa / Bank
+          </button>
+        </div>
+
+        <!-- Option 1: Card / Stripe Checkout -->
+        <div id="payment-view-card">
+          <p style="font-size: 12px; color: var(--slate-300); margin-bottom: 14px;">
+            Securely pay using Visa, MasterCard, Apple Pay, or Google Pay via <strong>LemonSqueezy / Stripe</strong>.
+          </p>
+          <div style="background: rgba(0,0,0,0.3); border: 1px solid var(--glass-border); border-radius: 10px; padding: 14px; margin-bottom: 16px; text-align: center;">
+            <svg width="48" height="48" viewBox="0 0 24 24" style="margin-bottom: 8px;"><path fill="#6366f1" d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/></svg>
+            <strong style="color: #fff; font-size: 14px; display: block;">Instant Global Checkout</strong>
+            <span style="font-size: 11px; color: var(--slate-400);">Instant 1-second credit activation upon successful card payment.</span>
+          </div>
+          <button type="button" id="btn-proceed-card-payment" class="btn btn-primary" style="width: 100%; background: linear-gradient(135deg, #6366f1, #10b981); font-weight: 700; padding: 12px;">
+            Proceed to Secure Card Checkout 🔒
+          </button>
+        </div>
+
+        <!-- Option 2: Local Pakistani JazzCash / EasyPaisa / Bank Transfer -->
+        <div id="payment-view-local" style="display: none;">
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; padding: 14px; margin-bottom: 14px; font-size: 11px; color: var(--slate-200); line-height: 1.7;">
+            <strong style="color: #10b981; font-size: 13px; display: block; margin-bottom: 6px;">📌 Local Transfer Account Details:</strong>
+            • <strong>JazzCash / EasyPaisa Number:</strong> <span style="color: #fff; font-weight: 700;">0327-2190535</span> (Title: Bilal Faisal)<br>
+            • <strong>Bank Account:</strong> Meezan Bank Ltd | IBAN: PK92MEZN009912345678
+          </div>
+
+          <form id="local-trx-form">
+            <div class="form-group">
+              <label for="trx-id-input">Enter Transaction ID (Trx ID / Ref No)</label>
+              <input type="text" id="trx-id-input" placeholder="e.g. 0293847561 or TRX987654" required class="search-input" style="font-weight: 700; letter-spacing: 1px;">
+            </div>
+            <div class="error-msg" id="trx-error" style="display: none;"></div>
+            <div class="success-msg" id="trx-success" style="display: none;"></div>
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 8px;">
+              Submit Transaction ID & Activate Credits 🚀
+            </button>
+          </form>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       DEDICATED SAAS ADMIN PANEL MODAL
+       ========================================== -->
+  <div class="modal-overlay" id="admin-panel-modal" style="display: none;">
+    <div class="glass-card modal-card" style="max-width: 920px; width: 95%;">
+      <div class="modal-header" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 12px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 24px;">👑</span>
+          <div>
+            <h2 style="margin: 0; color: #fff; font-size: 20px;">SaaS Admin Control Dashboard</h2>
+            <p style="margin: 0; color: var(--slate-400); font-size: 11px;">Manage users, assign credits, track SaaS usage metrics & create accounts</p>
+          </div>
+        </div>
+        <button class="modal-close" id="btn-close-admin-panel">&times;</button>
+      </div>
+
+      <!-- Admin Stats Grid -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); padding: 12px 16px; border-radius: 10px; text-align: center;">
+          <span style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Total Registered Users</span>
+          <h3 id="admin-stat-total-users" style="color: #6366f1; font-size: 22px; margin: 4px 0 0 0; font-weight: 800;">0</h3>
+        </div>
+        <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px 16px; border-radius: 10px; text-align: center;">
+          <span style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">System Active Credits</span>
+          <h3 id="admin-stat-total-credits" style="color: #10b981; font-size: 22px; margin: 4px 0 0 0; font-weight: 800;">0</h3>
+        </div>
+        <div style="background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); padding: 12px 16px; border-radius: 10px; text-align: center;">
+          <span style="font-size: 11px; color: var(--slate-400); text-transform: uppercase; font-weight: 700;">Storage Backend</span>
+          <h3 id="admin-stat-db-mode" style="color: #f59e0b; font-size: 16px; margin: 8px 0 0 0; font-weight: 700;">Local DB</h3>
+        </div>
+      </div>
+
+      <!-- Admin Tabs: Manage Users / Create User -->
+      <div style="display: flex; gap: 8px; border-bottom: 1px solid var(--glass-border); padding-bottom: 8px; margin-bottom: 16px;">
+        <button class="segment-btn active" id="admin-tab-users" style="padding: 6px 14px; font-size: 12px;">👥 Manage Users</button>
+        <button class="segment-btn" id="admin-tab-create" style="padding: 6px 14px; font-size: 12px;">➕ Create New Account</button>
+      </div>
+
+      <!-- View 1: User Management Table -->
+      <div id="admin-view-users-list">
+        <div style="overflow-x: auto; max-height: 380px; overflow-y: auto;">
+          <table class="data-table" style="width: 100%; text-align: left; font-size: 12px;">
+            <thead>
+              <tr style="background: rgba(0,0,0,0.4); color: var(--slate-300);">
+                <th style="padding: 10px;">Username</th>
+                <th style="padding: 10px;">Email</th>
+                <th style="padding: 10px;">Role</th>
+                <th style="padding: 10px;">Credits</th>
+                <th style="padding: 10px; text-align: right;">Admin Actions</th>
+              </tr>
+            </thead>
+            <tbody id="admin-panel-users-tbody">
+              <tr><td colspan="5" style="text-align: center; padding: 20px; color: var(--slate-400);">Loading SaaS users...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- View 2: Create User Account Form -->
+      <div id="admin-view-create-user" style="display: none; max-width: 500px; margin: 20px auto;">
+        <form id="admin-panel-create-form" class="support-form">
+          <div class="form-group">
+            <label for="adm-username">Username</label>
+            <input type="text" id="adm-username" placeholder="e.g. johndoe" required class="search-input">
+          </div>
+          <div class="form-group" style="margin-top: 8px;">
+            <label for="adm-email">Email Address</label>
+            <input type="email" id="adm-email" placeholder="e.g. john@example.com" required class="search-input">
+          </div>
+          <div class="form-group" style="margin-top: 8px;">
+            <label for="adm-password">Password</label>
+            <input type="password" id="adm-password" placeholder="Account Password" required class="search-input">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 8px;">
+            <div class="form-group">
+              <label for="adm-credits">Credits</label>
+              <input type="number" id="adm-credits" value="500" required class="search-input">
+            </div>
+            <div class="form-group">
+              <label for="adm-role">Account Role</label>
+              <select id="adm-role" class="search-input" style="background: var(--input-bg); color: #fff; border: 1px solid var(--glass-border); border-radius: 8px; padding: 10px;">
+                <option value="user">User</option>
+                <option value="pro">Pro SaaS</option>
+                <option value="business">Business</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+          </div>
+          <div class="error-msg" id="adm-create-error" style="display: none; margin-top: 10px;"></div>
+          <div class="success-msg" id="adm-create-success" style="display: none; margin-top: 10px;"></div>
+          <button type="submit" class="btn btn-primary" style="margin-top: 14px; width: 100%;">Create Account 🚀</button>
+        </form>
+      </div>
+
     </div>
   </div>
 

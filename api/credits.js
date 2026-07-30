@@ -1,46 +1,68 @@
-const db = require('./db_kv');
+const connectToDatabase = require('./db');
+const User = require('./models/User');
+const fileDb = require('./fileDb');
+const { extractToken, verifyToken } = require('./authMiddleware');
 
 module.exports = async (req, res) => {
-    if (req.method !== 'POST') {
-        res.setHeader('Allow', ['POST']);
-        return res.status(405).json({ error: `Method ${req.method} Not Allowed` });
+    const token = extractToken(req);
+    if (!token) {
+        return res.status(401).json({ error: 'Authorization token required.' });
     }
 
-    const { username, amount } = req.body || {};
-
-    if (!username || amount === undefined) {
-        return res.status(400).json({ error: 'Username and amount are required.' });
+    const decoded = verifyToken(token);
+    if (!decoded) {
+        return res.status(401).json({ error: 'Invalid token.' });
     }
 
     try {
-        const user = await db.getUserByUsername(username);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found.' });
+        const { isMongo } = await connectToDatabase();
+        const action = req.query.action || (req.body && req.body.action) || 'deduct';
+
+        if (action === 'deduct' && req.method === 'POST') {
+            const count = parseInt(req.body.count || 1, 10);
+
+            if (isMongo) {
+                const user = await User.findById(decoded.id);
+                if (!user) return res.status(404).json({ error: 'User not found.' });
+
+                if (user.username !== 'admin' && user.credits < count) {
+                    return res.status(402).json({ error: 'Insufficient credits. Upgrade plan or purchase top-up pack!' });
+                }
+
+                if (user.username !== 'admin') {
+                    user.credits = Math.max(0, user.credits - count);
+                    await user.save();
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    credits: user.credits
+                });
+            } else {
+                const user = await fileDb.findUser({ username: decoded.username });
+                if (!user) return res.status(404).json({ error: 'User not found.' });
+
+                if (user.username !== 'admin' && user.credits < count) {
+                    return res.status(402).json({ error: 'Insufficient credits. Upgrade plan or purchase top-up pack!' });
+                }
+
+                let newCredits = user.credits;
+                if (user.username !== 'admin') {
+                    newCredits = Math.max(0, user.credits - count);
+                    await fileDb.updateUserCredits(user.username, newCredits);
+                }
+
+                return res.status(200).json({
+                    success: true,
+                    credits: newCredits
+                });
+            }
         }
 
-        // Subtract credits
-        const currentCredits = parseInt(user.credits || '0', 10);
-        const amountToSubtract = parseInt(amount, 10);
-
-        if (currentCredits < amountToSubtract) {
-            return res.status(400).json({ error: 'Insufficient credits for this conversion.' });
-        }
-
-        const newCredits = Math.max(0, currentCredits - amountToSubtract);
-        const success = await db.updateUserCredits(username, newCredits);
-
-        if (!success) {
-            throw new Error('Failed to update credits in KV store');
-        }
-
-        return res.status(200).json({ 
-            success: true, 
-            message: 'Credits consumed successfully.',
-            credits: newCredits 
-        });
+        return res.status(400).json({ error: 'Invalid credits action.' });
 
     } catch (err) {
-        console.error('Credits error:', err);
-        return res.status(500).json({ error: 'Internal server error while consuming credits.' });
+        console.error('Credits API Error:', err);
+        return res.status(500).json({ error: 'Internal server error processing credits.' });
     }
 };

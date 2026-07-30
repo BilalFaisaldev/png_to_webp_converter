@@ -13,7 +13,11 @@
     "vercel": "^54.14.0"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^17.4.2",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.8.1",
     "mysql2": "^3.9.2",
-    "bcryptjs": "^2.4.3"
+    "nodemailer": "^9.0.3"
   }
 }

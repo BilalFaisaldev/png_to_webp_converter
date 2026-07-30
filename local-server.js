@@ -1,9 +1,11 @@
+require('dotenv').config();
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
 
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
+
 
 const MIME_TYPES = {
   '.html': 'text/html',

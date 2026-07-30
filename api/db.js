@@ -1,17 +1,41 @@
-const mysql = require('mysql2');
+const mongoose = require('mongoose');
 
-// Connection pooling configuration using environment variables
-const pool = mysql.createPool({
-    host: process.env.MYSQL_HOST || 'localhost',
-    user: process.env.MYSQL_USER || 'root',
-    password: process.env.MYSQL_PASSWORD || '',
-    database: process.env.MYSQL_DATABASE || 'png_to_webp_db',
-    port: parseInt(process.env.MYSQL_PORT || '3306', 10),
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-    ssl: process.env.MYSQL_SSL === 'true' ? { rejectUnauthorized: false } : null
-});
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/png_to_webp_db';
 
-// Export the promise-based pool wrapper
-module.exports = pool.promise();
+let cachedState = global.mongoState;
+
+if (!cachedState) {
+  cachedState = global.mongoState = { isConnected: false, isFallback: false, promise: null };
+}
+
+async function connectToDatabase() {
+  if (cachedState.isConnected) {
+    return { isMongo: true };
+  }
+
+  if (cachedState.isFallback) {
+    return { isMongo: false };
+  }
+
+  if (!cachedState.promise) {
+    const opts = {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 2500
+    };
+
+    cachedState.promise = mongoose.connect(MONGODB_URI, opts).then(() => {
+      console.log('✅ Successfully connected to MongoDB.');
+      cachedState.isConnected = true;
+      return { isMongo: true };
+    }).catch((err) => {
+      console.warn('⚠️ MongoDB connection failed (no local MongoDB server on port 27017). Falling back to local storage database.');
+      cachedState.isFallback = true;
+      cachedState.isConnected = false;
+      return { isMongo: false };
+    });
+  }
+
+  return await cachedState.promise;
+}
+
+module.exports = connectToDatabase;
