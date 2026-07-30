@@ -1,39 +1,58 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
-const DATA_DIR = path.join(__dirname, '..', '.data');
+const isVercel = !!process.env.VERCEL;
+const DATA_DIR = isVercel ? path.join(os.tmpdir(), '.data') : path.join(__dirname, '..', '.data');
 const USERS_FILE = path.join(DATA_DIR, 'users.json');
 
+let memoryUsers = [];
+
 function ensureDataFile() {
-  if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true });
-  }
-  if (!fs.existsSync(USERS_FILE)) {
-    fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2));
+  try {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
+    }
+    if (!fs.existsSync(USERS_FILE)) {
+      fs.writeFileSync(USERS_FILE, JSON.stringify([], null, 2));
+    }
+  } catch (err) {
+    console.warn('File DB storage warning (using in-memory fallback):', err.message);
   }
 }
 
 function readUsers() {
   ensureDataFile();
   try {
-    const data = fs.readFileSync(USERS_FILE, 'utf8');
-    return JSON.parse(data || '[]');
+    if (fs.existsSync(USERS_FILE)) {
+      const data = fs.readFileSync(USERS_FILE, 'utf8');
+      const parsed = JSON.parse(data || '[]');
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        memoryUsers = parsed;
+      }
+    }
   } catch (e) {
-    return [];
+    console.warn('Failed reading users file, using memory cache:', e.message);
   }
+  return memoryUsers;
 }
 
 function saveUsers(users) {
-  ensureDataFile();
-  fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  memoryUsers = users;
+  try {
+    ensureDataFile();
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+  } catch (err) {
+    console.warn('Failed writing to users file (stored in memory cache):', err.message);
+  }
 }
 
 async function findUser({ username, email, id }) {
   const users = readUsers();
   return users.find(u => {
     if (id && (u._id === id || u.id === id)) return true;
-    if (username && u.username.toLowerCase() === username.toLowerCase()) return true;
-    if (email && u.email.toLowerCase() === email.toLowerCase()) return true;
+    if (username && u.username && u.username.toLowerCase() === username.toLowerCase()) return true;
+    if (email && u.email && u.email.toLowerCase() === email.toLowerCase()) return true;
     return false;
   }) || null;
 }

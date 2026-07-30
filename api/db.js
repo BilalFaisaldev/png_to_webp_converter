@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/png_to_webp_db';
+const isVercel = !!process.env.VERCEL;
 
 let cachedState = global.mongoState;
 
@@ -17,6 +18,13 @@ async function connectToDatabase() {
     return { isMongo: false };
   }
 
+  // If running on Vercel and no cloud MongoDB URI is supplied, skip local mongodb attempt immediately
+  if (isVercel && (MONGODB_URI.includes('127.0.0.1') || MONGODB_URI.includes('localhost'))) {
+    console.warn('⚡ Vercel environment detected without Cloud MongoDB Atlas URI. Using local/memory fileDb fallback.');
+    cachedState.isFallback = true;
+    return { isMongo: false };
+  }
+
   if (!cachedState.promise) {
     const opts = {
       bufferCommands: false,
@@ -28,7 +36,7 @@ async function connectToDatabase() {
       cachedState.isConnected = true;
       return { isMongo: true };
     }).catch((err) => {
-      console.warn('⚠️ MongoDB connection failed (no local MongoDB server on port 27017). Falling back to local storage database.');
+      console.warn('⚠️ MongoDB connection failed. Falling back to fileDb.');
       cachedState.isFallback = true;
       cachedState.isConnected = false;
       return { isMongo: false };
