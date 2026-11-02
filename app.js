@@ -840,9 +840,30 @@ async function initClerkAuth() {
       return;
     }
 
-    // Wait for Clerk SDK to load from CDN
+    // Ensure Clerk SDK with UI components is loaded from Frontend API
+    if (!window.Clerk || !window.Clerk.mountSignIn) {
+      let frontendApi = 'shining-scorpion-1462.clerk.accounts.dev';
+      try {
+        const raw = publishableKey.replace(/^pk_(test|live)_/, '');
+        frontendApi = atob(raw).replace(/\$$/, '');
+      } catch (e) {}
+
+      let script = document.querySelector('script[data-clerk-publishable-key]');
+      const expectedSrc = `https://${frontendApi}/npm/@clerk/clerk-js@5/dist/clerk.browser.js`;
+      if (!script || !script.src.includes('clerk.accounts.dev')) {
+        if (script) script.remove();
+        script = document.createElement('script');
+        script.setAttribute('data-clerk-publishable-key', publishableKey);
+        script.src = expectedSrc;
+        script.async = true;
+        script.crossOrigin = 'anonymous';
+        document.head.appendChild(script);
+      }
+    }
+
+    // Wait for Clerk SDK to load from Frontend API
     let retries = 0;
-    while (!window.Clerk && retries < 40) {
+    while ((!window.Clerk || !window.Clerk.mountSignIn) && retries < 50) {
       await new Promise(resolve => setTimeout(resolve, 100));
       retries++;
     }
