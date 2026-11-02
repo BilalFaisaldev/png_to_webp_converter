@@ -24,27 +24,6 @@ function applyTheme(theme) {
     btn.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}\u{FE0F}';
     btn.title = theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
   });
-
-  // Dynamically update Clerk theme if active and not signed in
-  if (clerkInstance && !clerkInstance.user) {
-    const signInDiv = document.getElementById('clerk-sign-in');
-    if (signInDiv && clerkInstance.mountSignIn && window.clerkAppearanceConfig) {
-      const isLight = theme === 'light';
-      const clerkTheme = {
-        ...window.clerkAppearanceConfig,
-        variables: {
-          ...window.clerkAppearanceConfig.variables,
-          colorBackground: isLight ? '#ffffff' : '#0f172a',
-          colorText: isLight ? '#0f172a' : '#f8fafc',
-          colorTextSecondary: isLight ? '#64748b' : '#94a3b8',
-          colorInputBackground: isLight ? '#ffffff' : '#040810',
-          colorInputText: isLight ? '#0f172a' : '#ffffff'
-        }
-      };
-      signInDiv.innerHTML = '';
-      clerkInstance.mountSignIn(signInDiv, { appearance: clerkTheme });
-    }
-  }
 }
 /* ==========================================================================
    STATE MANAGEMENT & CONFIGURATION

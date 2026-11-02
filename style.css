@@ -1645,6 +1645,13 @@ h1, h2, h3, h4 {
 }
 
 /* Light Theme overrides for Clerk components */
+[data-theme="light"] .cl-rootBox,
+[data-theme="light"] .cl-cardBox,
+[data-theme="light"] .cl-signIn-root,
+[data-theme="light"] .cl-signIn-start {
+  background: transparent !important;
+}
+
 [data-theme="light"] .cl-card {
   background: #ffffff !important;
   border: 1px solid rgba(0, 0, 0, 0.1) !important;
