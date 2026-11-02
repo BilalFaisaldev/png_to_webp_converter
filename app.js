@@ -874,17 +874,47 @@ async function initClerkAuth() {
 
     clerkInstance = window.Clerk;
 
-    await clerkInstance.load({
-      publishableKey,
-      appearance: {
-        variables: {
-          colorPrimary: '#6366f1',
-          colorBackground: '#0f172a',
-          colorText: '#f8fafc',
-          colorInputBackground: '#1e293b',
-          colorInputText: '#ffffff'
+    const clerkAppearance = {
+      layout: {
+        socialButtonsVariant: 'blockButton',
+        socialButtonsPlacement: 'top'
+      },
+      variables: {
+        colorPrimary: '#6366f1',
+        colorBackground: '#0f172a',
+        colorText: '#f8fafc',
+        colorTextSecondary: '#94a3b8',
+        colorInputBackground: '#040810',
+        colorInputText: '#ffffff'
+      },
+      elements: {
+        rootBox: {
+          width: '100%',
+          maxWidth: '440px'
+        },
+        card: {
+          backgroundColor: '#0f172a',
+          border: '1px solid rgba(255, 255, 255, 0.12)',
+          borderRadius: '16px',
+          boxShadow: '0 20px 40px rgba(0, 0, 0, 0.6)'
+        },
+        socialButtonsBlockButton: {
+          backgroundColor: 'rgba(255, 255, 255, 0.05)',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          color: '#ffffff',
+          minHeight: '44px'
+        },
+        socialButtonsBlockButtonText: {
+          color: '#ffffff',
+          fontWeight: '600'
         }
       }
+    };
+    window.clerkAppearanceConfig = clerkAppearance;
+
+    await clerkInstance.load({
+      publishableKey,
+      appearance: clerkAppearance
     });
 
     // Listen to session state changes
@@ -981,7 +1011,7 @@ function onClerkSignedOut() {
   if (signInDiv && clerkInstance && clerkInstance.mountSignIn) {
     signInDiv.style.display = 'block';
     signInDiv.innerHTML = '';
-    clerkInstance.mountSignIn(signInDiv);
+    clerkInstance.mountSignIn(signInDiv, { appearance: window.clerkAppearanceConfig });
   }
 }
 
