@@ -1,3 +1,51 @@
+let clerkInstance = null;
+/* ==========================================================================
+   THEME TOGGLE & PERSISTENCE (LIGHT / DARK)
+   ========================================================================== */
+function initTheme() {
+  const savedTheme = localStorage.getItem('app_theme') || 'dark';
+  applyTheme(savedTheme);
+
+  document.querySelectorAll('.theme-toggle').forEach(el => {
+    el.onclick = (e) => {
+      e.preventDefault();
+      const current = document.documentElement.getAttribute('data-theme') || 'dark';
+      const nextTheme = current === 'dark' ? 'light' : 'dark';
+      applyTheme(nextTheme);
+    };
+  });
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('app_theme', theme);
+
+  document.querySelectorAll('.theme-toggle').forEach(btn => {
+    btn.textContent = theme === 'dark' ? '\u{1F319}' : '\u{2600}\u{FE0F}';
+    btn.title = theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+  });
+
+  // Dynamically update Clerk theme if active and not signed in
+  if (clerkInstance && !clerkInstance.user) {
+    const signInDiv = document.getElementById('clerk-sign-in');
+    if (signInDiv && clerkInstance.mountSignIn && window.clerkAppearanceConfig) {
+      const isLight = theme === 'light';
+      const clerkTheme = {
+        ...window.clerkAppearanceConfig,
+        variables: {
+          ...window.clerkAppearanceConfig.variables,
+          colorBackground: isLight ? '#ffffff' : '#0f172a',
+          colorText: isLight ? '#0f172a' : '#f8fafc',
+          colorTextSecondary: isLight ? '#64748b' : '#94a3b8',
+          colorInputBackground: isLight ? '#ffffff' : '#040810',
+          colorInputText: isLight ? '#0f172a' : '#ffffff'
+        }
+      };
+      signInDiv.innerHTML = '';
+      clerkInstance.mountSignIn(signInDiv, { appearance: clerkTheme });
+    }
+  }
+}
 /* ==========================================================================
    STATE MANAGEMENT & CONFIGURATION
    ========================================================================== */
@@ -121,12 +169,8 @@ const elements = {
    EVENT INITIALIZATION & ROUTING
    ========================================================================== */
 function initEvents() {
-  // Mock theme toggle and dummy links
-  document.querySelectorAll('.theme-toggle').forEach(el => {
-    el.addEventListener('click', (e) => {
-      e.preventDefault();
-    });
-  });
+  // Initialize theme toggle and persistence
+  initTheme();
 
   // Segmented control: Download Mode
   elements.downloadModeControl.addEventListener('click', (e) => {
@@ -810,7 +854,7 @@ function escapeHtml(unsafe) {
 /* ==========================================================================
    AUTHENTICATION WORKFLOW FUNCTIONS (CLERK AUTH)
    ========================================================================== */
-let clerkInstance = null;
+// clerkInstance declared at top
 
 async function initClerkAuth() {
   try {
@@ -1637,3 +1681,6 @@ async function handleAdminPanelCreateUserSubmit(e) {
 
 // Start listener
 window.addEventListener('DOMContentLoaded', initEvents);
+if (document.readyState === 'complete' || document.readyState === 'interactive') {
+  initTheme();
+}
