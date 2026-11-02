@@ -815,6 +815,10 @@ let clerkInstance = null;
 async function initClerkAuth() {
   try {
     let publishableKey = '';
+    const scriptEl = document.querySelector('script[data-clerk-publishable-key]');
+    if (scriptEl) {
+      publishableKey = scriptEl.getAttribute('data-clerk-publishable-key');
+    }
     try {
       const res = await fetch('/api/clerk-config');
       if (res.ok) {

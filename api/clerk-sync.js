@@ -126,3 +126,4 @@ module.exports = async (req, res) => {
     return res.end(JSON.stringify({ error: 'Internal server error syncing Clerk user', message: err.message }));
   }
 };
+
