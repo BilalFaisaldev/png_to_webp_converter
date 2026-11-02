@@ -7,6 +7,4 @@ icons_generator.py
 test_converter.py
 requirements.txt
 build_instructions.md
-assets/logo.ico
-assets/logo.png
 __pycache__/

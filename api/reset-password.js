@@ -67,16 +67,12 @@ module.exports = async (req, res) => {
             }
 
             // Update user password in local file DB
-            const users = require('./fileDb');
-            const userList = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', '.data', 'users.json'), 'utf8') || '[]');
-            const foundUser = userList.find(u => u.username === user.username);
-            if (foundUser) {
-                foundUser.password = hashedPassword;
-                foundUser.isVerified = true;
-                foundUser.otpCode = null;
-                foundUser.otpExpires = null;
-                require('fs').writeFileSync(require('path').join(__dirname, '..', '.data', 'users.json'), JSON.stringify(userList, null, 2));
-            }
+            await fileDb.updateUser(user.username, {
+                password: hashedPassword,
+                isVerified: true,
+                otpCode: null,
+                otpExpires: null
+            });
 
             return res.status(200).json({
                 success: true,

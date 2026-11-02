@@ -108,6 +108,16 @@ async function verifyOTP(username, otpCode) {
   return { success: true, user };
 }
 
+async function updateUser(username, updates) {
+  const users = readUsers();
+  const cleanUsername = username.trim().toLowerCase();
+  const user = users.find(u => u.username === cleanUsername);
+  if (!user) return null;
+  Object.assign(user, updates);
+  saveUsers(users);
+  return user;
+}
+
 async function updateUserCredits(username, credits) {
   const users = readUsers();
   const cleanUsername = username.trim().toLowerCase();
@@ -146,6 +156,7 @@ module.exports = {
   createUser,
   setOTP,
   verifyOTP,
+  updateUser,
   updateUserCredits,
   deleteUser,
   getAllUsers

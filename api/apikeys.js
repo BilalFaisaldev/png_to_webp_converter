@@ -32,12 +32,7 @@ module.exports = async (req, res) => {
                 if (!user) return res.status(404).json({ error: 'User not found.' });
                 
                 // Save to local file DB
-                const userList = JSON.parse(require('fs').readFileSync(require('path').join(__dirname, '..', '.data', 'users.json'), 'utf8') || '[]');
-                const found = userList.find(u => u.username === user.username);
-                if (found) {
-                    found.apiKey = newKey;
-                    require('fs').writeFileSync(require('path').join(__dirname, '..', '.data', 'users.json'), JSON.stringify(userList, null, 2));
-                }
+                await fileDb.updateUser(user.username, { apiKey: newKey });
             }
 
             return res.status(201).json({
