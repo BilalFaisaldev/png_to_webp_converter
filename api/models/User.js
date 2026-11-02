@@ -1,28 +1,35 @@
 const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
+  clerkId: {
+    type: String,
+    default: null,
+    sparse: true
+  },
   username: {
     type: String,
     required: [true, 'Username is required'],
-    unique: true,
     trim: true,
     lowercase: true,
-    minlength: [3, 'Username must be at least 3 characters long']
+    minlength: [2, 'Username must be at least 2 characters long']
   },
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
     trim: true,
     lowercase: true
   },
   password: {
     type: String,
-    required: [true, 'Password is required']
+    default: null
+  },
+  apiKey: {
+    type: String,
+    default: null
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    enum: ['user', 'admin', 'pro', 'business'],
     default: 'user'
   },
   credits: {
@@ -31,7 +38,7 @@ const UserSchema = new mongoose.Schema({
   },
   isVerified: {
     type: Boolean,
-    default: false
+    default: true
   },
   otpCode: {
     type: String,

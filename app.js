@@ -41,48 +41,20 @@ const elements = {
   progressContainer: document.getElementById('progress-container'),
   statsText: document.getElementById('stats-text'),
   
-  // Auth DOM Elements
+  // Auth & Clerk DOM Elements
   authContainer: document.getElementById('auth-container'),
+  clerkAuthWrapper: document.getElementById('clerk-auth-wrapper'),
+  clerkLoading: document.getElementById('clerk-loading'),
+  clerkSignIn: document.getElementById('clerk-sign-in'),
+  clerkMissingKey: document.getElementById('clerk-missing-key'),
+  clerkUserButton: document.getElementById('clerk-user-button'),
   dashboardContainer: document.getElementById('dashboard-container'),
   developerFooter: document.getElementById('DeveloperFooter'),
-  tabLogin: document.getElementById('tab-login'),
-  tabSignup: document.getElementById('tab-signup'),
-  loginForm: document.getElementById('login-form'),
-  signupForm: document.getElementById('signup-form'),
-  loginError: document.getElementById('login-error'),
-  signupError: document.getElementById('signup-error'),
-  signupSuccess: document.getElementById('signup-success'),
   userProfileHeader: document.getElementById('user-profile-header'),
   userDisplayName: document.getElementById('user-display-name'),
+  navbarCredits: document.getElementById('navbar-credits'),
+  btnAdminPortal: document.getElementById('btn-admin-portal'),
   btnLogout: document.getElementById('btn-logout'),
-
-  // OTP DOM Elements
-  otpForm: document.getElementById('otp-form'),
-  otpCodeInput: document.getElementById('otp-code-input'),
-  otpError: document.getElementById('otp-error'),
-  otpSuccess: document.getElementById('otp-success'),
-  otpEmailDisplay: document.getElementById('otp-email-display'),
-  btnResendOtp: document.getElementById('btn-resend-otp'),
-  btnGoogleLogin: document.querySelector('.btn-google-login'),
-  btnGoogleSignup: document.querySelector('.btn-google-signup'),
-
-  // Google Modal Elements
-  googleModal: document.getElementById('google-modal'),
-  btnCloseGoogle: document.getElementById('btn-close-google'),
-  btnConfirmGoogleAuth: document.getElementById('btn-confirm-google-auth'),
-  googleEmailInput: document.getElementById('google-email-input'),
-
-  // Forgot Password Elements
-  linkForgotPassword: document.getElementById('link-forgot-password'),
-  forgotForm: document.getElementById('forgot-form'),
-  forgotUsername: document.getElementById('forgot-username'),
-  forgotError: document.getElementById('forgot-error'),
-  forgotSuccess: document.getElementById('forgot-success'),
-  resetForm: document.getElementById('reset-form'),
-  resetOtpInput: document.getElementById('reset-otp-input'),
-  resetNewPassword: document.getElementById('reset-new-password'),
-  resetError: document.getElementById('reset-error'),
-  resetSuccess: document.getElementById('reset-success'),
 
   // SaaS Pricing & API Elements
   navLinkPricing: document.getElementById('nav-link-pricing'),
@@ -272,36 +244,8 @@ function initEvents() {
   elements.btnClear.addEventListener('click', clearQueue);
   elements.btnDownloadAll.addEventListener('click', downloadZipArchive);
 
-  // Auth Event Listeners
-  elements.tabLogin.addEventListener('click', () => toggleAuthTabs('login'));
-  elements.tabSignup.addEventListener('click', () => toggleAuthTabs('signup'));
-  elements.loginForm.addEventListener('submit', handleLoginSubmit);
-  elements.signupForm.addEventListener('submit', handleSignupSubmit);
-  elements.btnLogout.addEventListener('click', handleLogout);
-
-  if (elements.linkForgotPassword) {
-    elements.linkForgotPassword.addEventListener('click', (e) => {
-      e.preventDefault();
-      showForgotView();
-    });
-  }
-
-  if (elements.forgotForm) elements.forgotForm.addEventListener('submit', handleForgotSubmit);
-  if (elements.resetForm) elements.resetForm.addEventListener('submit', handleResetSubmit);
-
-  document.querySelectorAll('.link-back-login').forEach(link => {
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      toggleAuthTabs('login');
-    });
-  });
-
-  if (elements.otpForm) elements.otpForm.addEventListener('submit', handleOtpSubmit);
-  if (elements.btnResendOtp) elements.btnResendOtp.addEventListener('click', handleResendOtp);
-  if (elements.btnGoogleLogin) elements.btnGoogleLogin.addEventListener('click', openGoogleAuthModal);
-  if (elements.btnGoogleSignup) elements.btnGoogleSignup.addEventListener('click', openGoogleAuthModal);
-  if (elements.btnCloseGoogle) elements.btnCloseGoogle.addEventListener('click', closeGoogleAuthModal);
-  if (elements.btnConfirmGoogleAuth) elements.btnConfirmGoogleAuth.addEventListener('click', handleConfirmGoogleAuth);
+  // Auth Event Listeners (Clerk Auth)
+  if (elements.btnLogout) elements.btnLogout.addEventListener('click', handleLogout);
 
   // SaaS Pricing & API Key Listeners
   if (elements.navLinkPricing) elements.navLinkPricing.addEventListener('click', (e) => { e.preventDefault(); openPricingModal(); });
@@ -445,7 +389,7 @@ function initEvents() {
   }
 
   // Check if session exists on load
-  checkAuthSession();
+  initClerkAuth();
 }
 
 /* ==========================================================================
@@ -864,477 +808,212 @@ function escapeHtml(unsafe) {
 }
 
 /* ==========================================================================
-   AUTHENTICATION WORKFLOW FUNCTIONS
+   AUTHENTICATION WORKFLOW FUNCTIONS (CLERK AUTH)
    ========================================================================== */
-/* ==========================================================================
-   AUTHENTICATION WORKFLOW FUNCTIONS
-   ========================================================================== */
-async function checkAuthSession() {
-  const token = localStorage.getItem('auth_token');
-  const cachedUser = localStorage.getItem('auth_user');
+let clerkInstance = null;
 
-  if (cachedUser && !token) {
-    // Legacy session cleanup
-    localStorage.removeItem('auth_user');
-  }
-
-  if (token) {
+async function initClerkAuth() {
+  try {
+    let publishableKey = '';
     try {
-      const res = await fetch('/api/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok && data.user) {
-        state.user = data.user;
-        localStorage.setItem('auth_user', JSON.stringify(data.user));
-        showAuthenticatedApp();
-        return;
-      } else {
-        // Token expired or invalid
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-        showAuthForms();
+      const res = await fetch('/api/clerk-config');
+      if (res.ok) {
+        const data = await res.json();
+        publishableKey = data.publishableKey;
       }
     } catch (e) {
-      console.warn('Network error checking session:', e);
-      if (cachedUser) {
-        try {
-          state.user = JSON.parse(cachedUser);
-          showAuthenticatedApp();
-          return;
-        } catch (err) {}
-      }
-      showAuthForms();
+      console.warn('Could not fetch /api/clerk-config:', e);
     }
-  } else {
-    showAuthForms();
+
+    if (!publishableKey && window.CLERK_PUBLISHABLE_KEY) {
+      publishableKey = window.CLERK_PUBLISHABLE_KEY;
+    }
+
+    if (!publishableKey) {
+      if (elements.clerkLoading) elements.clerkLoading.style.display = 'none';
+      if (elements.clerkMissingKey) elements.clerkMissingKey.style.display = 'block';
+      console.warn('⚡ Clerk Publishable Key missing. Set CLERK_PUBLISHABLE_KEY in .env or Vercel Environment Variables.');
+      return;
+    }
+
+    // Wait for Clerk SDK to load from CDN
+    let retries = 0;
+    while (!window.Clerk && retries < 40) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      retries++;
+    }
+
+    if (!window.Clerk) {
+      throw new Error('Clerk JS SDK failed to load from CDN. Please check your internet connection.');
+    }
+
+    clerkInstance = window.Clerk;
+
+    await clerkInstance.load({
+      publishableKey,
+      appearance: {
+        variables: {
+          colorPrimary: '#6366f1',
+          colorBackground: '#0f172a',
+          colorText: '#f8fafc',
+          colorInputBackground: '#1e293b',
+          colorInputText: '#ffffff'
+        }
+      }
+    });
+
+    // Listen to session state changes
+    clerkInstance.addListener(async ({ user, session }) => {
+      if (user && session) {
+        await onClerkSignedIn(user, session);
+      } else {
+        onClerkSignedOut();
+      }
+    });
+
+    if (clerkInstance.user && clerkInstance.session) {
+      await onClerkSignedIn(clerkInstance.user, clerkInstance.session);
+    } else {
+      onClerkSignedOut();
+    }
+
+  } catch (err) {
+    console.error('Clerk Initialization Error:', err);
+    if (elements.clerkLoading) elements.clerkLoading.style.display = 'none';
+    if (elements.clerkMissingKey) {
+      elements.clerkMissingKey.style.display = 'block';
+      elements.clerkMissingKey.innerHTML = `<h3 style="color:#ef4444; margin-bottom:8px;">Authentication Error</h3><p style="font-size:12px;">${err.message}</p>`;
+    }
+  }
+}
+
+async function onClerkSignedIn(user, session) {
+  try {
+    const primaryEmail = user.primaryEmailAddress ? user.primaryEmailAddress.emailAddress : (user.emailAddresses && user.emailAddresses[0]?.emailAddress);
+    const username = user.username || user.firstName || (primaryEmail ? primaryEmail.split('@')[0] : user.id);
+
+    // Call /api/clerk-sync to ensure user profile exists in DB and get their credits/role
+    let syncData = null;
+    try {
+      const syncRes = await fetch('/api/clerk-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          clerkId: user.id,
+          email: primaryEmail,
+          username: username
+        })
+      });
+      if (syncRes.ok) {
+        syncData = await syncRes.json();
+      }
+    } catch (e) {
+      console.warn('Error syncing Clerk user with backend:', e);
+    }
+
+    const appToken = syncData?.token || (await session.getToken());
+    if (appToken) {
+      localStorage.setItem('auth_token', appToken);
+    }
+
+    state.user = syncData?.user || {
+      id: user.id,
+      clerkId: user.id,
+      username: username,
+      email: primaryEmail,
+      role: 'user',
+      credits: 50
+    };
+
+    localStorage.setItem('auth_user', JSON.stringify(state.user));
+
+    showAuthenticatedApp();
+
+    // Mount Clerk User Button in navbar
+    const userBtnEl = document.getElementById('clerk-user-button');
+    if (userBtnEl && clerkInstance && clerkInstance.mountUserButton) {
+      userBtnEl.innerHTML = '';
+      clerkInstance.mountUserButton(userBtnEl, {
+        afterSignOutUrl: '/'
+      });
+    }
+
+  } catch (err) {
+    console.error('onClerkSignedIn Error:', err);
+    showAuthenticatedApp();
+  }
+}
+
+function onClerkSignedOut() {
+  state.user = null;
+  localStorage.removeItem('auth_token');
+  localStorage.removeItem('auth_user');
+
+  showAuthForms();
+
+  if (elements.clerkLoading) elements.clerkLoading.style.display = 'none';
+  const signInDiv = document.getElementById('clerk-sign-in');
+  if (signInDiv && clerkInstance && clerkInstance.mountSignIn) {
+    signInDiv.style.display = 'block';
+    signInDiv.innerHTML = '';
+    clerkInstance.mountSignIn(signInDiv);
   }
 }
 
 function showAuthenticatedApp() {
-  elements.authContainer.style.display = 'none';
-  elements.developerFooter.style.display = 'block';
-  elements.dashboardContainer.style.display = 'flex';
+  if (elements.authContainer) elements.authContainer.style.display = 'none';
+  if (elements.developerFooter) elements.developerFooter.style.display = 'block';
+  if (elements.dashboardContainer) elements.dashboardContainer.style.display = 'flex';
   
-  elements.userDisplayName.textContent = state.user.username;
-  elements.userProfileHeader.style.display = 'inline-flex';
+  if (state.user && elements.userDisplayName) {
+    elements.userDisplayName.textContent = state.user.username;
+  }
+  if (elements.userProfileHeader) {
+    elements.userProfileHeader.style.display = 'inline-flex';
+  }
 
-  if (state.user.role === 'admin' || state.user.username === 'admin') {
+  if (state.user && (state.user.role === 'admin' || state.user.username === 'admin')) {
     if (elements.btnAdminPortal) elements.btnAdminPortal.style.display = 'inline-block';
     if (elements.navbarCredits) elements.navbarCredits.textContent = 'Admin (Unlimited)';
   } else {
     if (elements.btnAdminPortal) elements.btnAdminPortal.style.display = 'none';
     if (elements.navbarCredits) {
       elements.navbarCredits.style.display = 'inline-flex';
-      elements.navbarCredits.textContent = `Credits: ${state.user.credits}`;
+      elements.navbarCredits.textContent = `Credits: ${state.user ? state.user.credits : 50}`;
     }
   }
 
   // Show Converter View
-  document.querySelector('.sidebar-column').style.display = 'flex';
-  elements.dragDropArea.style.display = 'flex';
+  const sidebar = document.querySelector('.sidebar-column');
+  if (sidebar) sidebar.style.display = 'flex';
+  if (elements.dragDropArea) elements.dragDropArea.style.display = 'flex';
   
   const total = state.filesQueue.length;
   if (total === 0) {
-    elements.emptyStateView.classList.add('active');
-    elements.tableView.classList.remove('active');
+    if (elements.emptyStateView) elements.emptyStateView.classList.add('active');
+    if (elements.tableView) elements.tableView.classList.remove('active');
   } else {
-    elements.emptyStateView.classList.remove('active');
-    elements.tableView.classList.add('active');
+    if (elements.emptyStateView) elements.emptyStateView.classList.remove('active');
+    if (elements.tableView) elements.tableView.classList.add('active');
   }
 }
 
 function showAuthForms() {
-  elements.authContainer.style.display = 'flex';
-  elements.dashboardContainer.style.display = 'none';
-  elements.developerFooter.style.display = 'none';
-  elements.userProfileHeader.style.display = 'none';
-  elements.adminView.style.display = 'none';
-}
-
-function toggleAuthTabs(mode) {
-  if (elements.otpForm) elements.otpForm.style.display = 'none';
-  if (elements.forgotForm) elements.forgotForm.style.display = 'none';
-  if (elements.resetForm) elements.resetForm.style.display = 'none';
-
-  if (mode === 'login') {
-    elements.tabLogin.classList.add('active');
-    elements.tabSignup.classList.remove('active');
-    elements.loginForm.style.display = 'flex';
-    elements.signupForm.style.display = 'none';
-  } else {
-    elements.tabLogin.classList.remove('active');
-    elements.tabSignup.classList.add('active');
-    elements.loginForm.style.display = 'none';
-    elements.signupForm.style.display = 'flex';
-  }
-  // Clear any existing errors/successes
-  elements.loginError.style.display = 'none';
-  elements.signupError.style.display = 'none';
-  elements.signupSuccess.style.display = 'none';
-}
-
-function showForgotView() {
-  elements.loginForm.style.display = 'none';
-  elements.signupForm.style.display = 'none';
-  if (elements.otpForm) elements.otpForm.style.display = 'none';
-  if (elements.resetForm) elements.resetForm.style.display = 'none';
-  if (elements.forgotForm) {
-    elements.forgotForm.style.display = 'flex';
-    elements.forgotForm.style.flexDirection = 'column';
-  }
-  if (elements.forgotError) elements.forgotError.style.display = 'none';
-  if (elements.forgotSuccess) elements.forgotSuccess.style.display = 'none';
-}
-
-function showResetView(username, email) {
-  state.pendingResetUser = username;
-  elements.loginForm.style.display = 'none';
-  elements.signupForm.style.display = 'none';
-  if (elements.otpForm) elements.otpForm.style.display = 'none';
-  if (elements.forgotForm) elements.forgotForm.style.display = 'none';
-  if (elements.resetForm) {
-    elements.resetForm.style.display = 'flex';
-    elements.resetForm.style.flexDirection = 'column';
-  }
-  if (elements.resetError) elements.resetError.style.display = 'none';
-  if (elements.resetSuccess) elements.resetSuccess.style.display = 'none';
-}
-
-async function handleForgotSubmit(e) {
-  e.preventDefault();
-  elements.forgotError.style.display = 'none';
-  elements.forgotSuccess.style.display = 'none';
-
-  const usernameOrEmail = elements.forgotUsername.value.trim();
-  const submitBtn = elements.forgotForm.querySelector('button[type="submit"]');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Sending Reset Code...';
-
-  try {
-    const response = await fetch('/api/forgot-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usernameOrEmail })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Failed to send reset code.');
-
-    elements.forgotSuccess.textContent = data.message || '6-digit code sent to your email!';
-    elements.forgotSuccess.style.display = 'block';
-
-    setTimeout(() => {
-      showResetView(data.username || usernameOrEmail, data.email);
-    }, 1000);
-
-  } catch (err) {
-    elements.forgotError.textContent = err.message;
-    elements.forgotError.style.display = 'block';
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Send Reset Code 📩';
-  }
-}
-
-async function handleResetSubmit(e) {
-  e.preventDefault();
-  elements.resetError.style.display = 'none';
-  elements.resetSuccess.style.display = 'none';
-
-  const otp = elements.resetOtpInput.value.trim();
-  const newPassword = elements.resetNewPassword.value;
-  const submitBtn = elements.resetForm.querySelector('button[type="submit"]');
-
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Updating Password...';
-
-  try {
-    const response = await fetch('/api/reset-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        usernameOrEmail: state.pendingResetUser || elements.forgotUsername.value,
-        otp,
-        newPassword
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error || 'Failed to reset password.');
-
-    elements.resetSuccess.textContent = data.message || 'Password reset successful!';
-    elements.resetSuccess.style.display = 'block';
-
-    setTimeout(() => {
-      toggleAuthTabs('login');
-    }, 1200);
-
-  } catch (err) {
-    elements.resetError.textContent = err.message;
-    elements.resetError.style.display = 'block';
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Update Password 🚀';
-  }
-}
-
-function showOtpView(username, email) {
-  state.pendingOtpUser = { username, email };
-  elements.loginForm.style.display = 'none';
-  elements.signupForm.style.display = 'none';
-  if (elements.otpForm) {
-    elements.otpForm.style.display = 'flex';
-    elements.otpForm.style.flexDirection = 'column';
-  }
-  if (elements.otpEmailDisplay) elements.otpEmailDisplay.textContent = email || username;
-  if (elements.otpError) elements.otpError.style.display = 'none';
-  if (elements.otpSuccess) elements.otpSuccess.style.display = 'none';
-  if (elements.otpCodeInput) elements.otpCodeInput.value = '';
-}
-
-async function handleLoginSubmit(e) {
-  e.preventDefault();
-  elements.loginError.style.display = 'none';
-  
-  const usernameOrEmail = document.getElementById('login-username').value.trim();
-  const password = document.getElementById('login-password').value;
-  const submitBtn = elements.loginForm.querySelector('button[type="submit"]');
-  
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Logging in...';
-  
-  try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usernameOrEmail, password })
-    });
-    
-    const data = await response.json();
-    
-    if (data.requiresOtp) {
-      showOtpView(data.username || usernameOrEmail, data.email || usernameOrEmail);
-      return;
-    }
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Invalid username or password.');
-    }
-    
-    // Save session token & user
-    state.user = data.user;
-    if (data.token) {
-      localStorage.setItem('auth_token', data.token);
-    }
-    localStorage.setItem('auth_user', JSON.stringify(data.user));
-    
-    elements.loginForm.reset();
-    showAuthenticatedApp();
-    
-  } catch (err) {
-    elements.loginError.textContent = err.message;
-    elements.loginError.style.display = 'block';
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Log In';
-  }
-}
-
-// User Registration Form Submission
-async function handleSignupSubmit(e) {
-  e.preventDefault();
-  elements.signupError.style.display = 'none';
-  elements.signupSuccess.style.display = 'none';
-  
-  const username = document.getElementById('req-name').value.trim();
-  const email = document.getElementById('req-email').value.trim();
-  const password = document.getElementById('req-password').value;
-  const whatsapp = document.getElementById('req-whatsapp').value.trim();
-  const credits = document.getElementById('req-credits').value;
-  const submitBtn = elements.signupForm.querySelector('button[type="submit"]');
-  
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Registering...';
-  
-  try {
-    const response = await fetch('/api/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, email, password, whatsapp, creditsRequested: credits })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to register account.');
-    }
-
-    if (data.requiresOtp) {
-      showOtpView(data.username || username, data.email || email);
-      return;
-    }
-
-    state.user = data.user;
-    if (data.token) {
-      localStorage.setItem('auth_token', data.token);
-    }
-    localStorage.setItem('auth_user', JSON.stringify(data.user));
-
-    elements.signupSuccess.textContent = 'Account created successfully! Logging you in...';
-    elements.signupSuccess.style.display = 'block';
-    elements.signupForm.reset();
-    
-    setTimeout(() => {
-      showAuthenticatedApp();
-    }, 1000);
-
-  } catch (err) {
-    elements.signupError.textContent = err.message || 'Failed to register account.';
-    elements.signupError.style.display = 'block';
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Create Account 🚀';
-  }
-}
-
-// OTP Code Submission Handler
-async function handleOtpSubmit(e) {
-  e.preventDefault();
-  if (!state.pendingOtpUser) return;
-
-  elements.otpError.style.display = 'none';
-  elements.otpSuccess.style.display = 'none';
-
-  const otp = elements.otpCodeInput.value.trim();
-  const submitBtn = elements.otpForm.querySelector('button[type="submit"]');
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Verifying Code...';
-
-  try {
-    const response = await fetch('/api/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ usernameOrEmail: state.pendingOtpUser.username, otp })
-    });
-
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Verification failed.');
-    }
-
-    state.user = data.user;
-    if (data.token) {
-      localStorage.setItem('auth_token', data.token);
-    }
-    localStorage.setItem('auth_user', JSON.stringify(data.user));
-
-    elements.otpSuccess.textContent = 'Email verified successfully! Logging you in...';
-    elements.otpSuccess.style.display = 'block';
-
-    setTimeout(() => {
-      showAuthenticatedApp();
-    }, 800);
-
-  } catch (err) {
-    elements.otpError.textContent = err.message;
-    elements.otpError.style.display = 'block';
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = 'Verify & Activate Account';
-  }
-}
-
-// Resend OTP Code Handler
-async function handleResendOtp() {
-  if (!state.pendingOtpUser) return;
-
-  elements.btnResendOtp.disabled = true;
-  elements.btnResendOtp.textContent = 'Sending...';
-
-  try {
-    const response = await fetch('/api/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'resend', usernameOrEmail: state.pendingOtpUser.username })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error);
-
-    elements.otpSuccess.textContent = data.message || 'Fresh verification code sent to your email.';
-    elements.otpSuccess.style.display = 'block';
-
-  } catch (err) {
-    elements.otpError.textContent = err.message;
-    elements.otpError.style.display = 'block';
-  } finally {
-    elements.btnResendOtp.disabled = false;
-    elements.btnResendOtp.textContent = 'Resend Code';
-  }
-}
-
-// Google OAuth Modal Handlers
-function openGoogleAuthModal() {
-  if (elements.googleModal) {
-    elements.googleModal.style.display = 'flex';
-  }
-}
-
-function closeGoogleAuthModal() {
-  if (elements.googleModal) {
-    elements.googleModal.style.display = 'none';
-  }
-}
-
-async function handleConfirmGoogleAuth() {
-  const userEmail = elements.googleEmailInput ? elements.googleEmailInput.value.trim() : 'bilalfaisalarain@gmail.com';
-  if (!userEmail) {
-    alert("Please enter a valid Google email address.");
-    return;
-  }
-
-  const submitBtn = elements.btnConfirmGoogleAuth;
-  const origText = submitBtn.textContent;
-  submitBtn.disabled = true;
-  submitBtn.textContent = 'Authenticating...';
-
-  try {
-    const response = await fetch('/api/google-auth', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email: userEmail,
-        name: userEmail.split('@')[0],
-        googleId: 'g_' + Date.now()
-      })
-    });
-
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error);
-
-    state.user = data.user;
-    if (data.token) {
-      localStorage.setItem('auth_token', data.token);
-    }
-    localStorage.setItem('auth_user', JSON.stringify(data.user));
-
-    closeGoogleAuthModal();
-    showAuthenticatedApp();
-
-  } catch (err) {
-    alert("Google Authentication failed: " + err.message);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.textContent = origText;
-  }
+  if (elements.authContainer) elements.authContainer.style.display = 'flex';
+  if (elements.dashboardContainer) elements.dashboardContainer.style.display = 'none';
+  if (elements.developerFooter) elements.developerFooter.style.display = 'none';
+  if (elements.userProfileHeader) elements.userProfileHeader.style.display = 'none';
+  if (elements.adminView) elements.adminView.style.display = 'none';
 }
 
 function handleLogout() {
-  state.user = null;
-  localStorage.removeItem('auth_token');
-  localStorage.removeItem('auth_user');
-  showAuthForms();
+  if (clerkInstance && clerkInstance.signOut) {
+    clerkInstance.signOut().then(() => {
+      onClerkSignedOut();
+    });
+  } else {
+    onClerkSignedOut();
+  }
 }
 
 /* ==========================================================================

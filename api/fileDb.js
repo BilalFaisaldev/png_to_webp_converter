@@ -47,9 +47,10 @@ function saveUsers(users) {
   }
 }
 
-async function findUser({ username, email, id }) {
+async function findUser({ username, email, id, clerkId }) {
   const users = readUsers();
   return users.find(u => {
+    if (clerkId && u.clerkId === clerkId) return true;
     if (id && (u._id === id || u.id === id)) return true;
     if (username && u.username && u.username.toLowerCase() === username.toLowerCase()) return true;
     if (email && u.email && u.email.toLowerCase() === email.toLowerCase()) return true;
@@ -57,10 +58,11 @@ async function findUser({ username, email, id }) {
   }) || null;
 }
 
-async function createUser({ username, email, password, role = 'user', credits = 50, isVerified = false, otpCode = null, otpExpires = null }) {
+async function createUser({ username, email, password = null, clerkId = null, role = 'user', credits = 50, isVerified = true, otpCode = null, otpExpires = null }) {
   const users = readUsers();
   const newUser = {
     _id: 'user_' + Date.now() + '_' + Math.random().toString(36).substring(2, 7),
+    clerkId,
     username: username.trim().toLowerCase(),
     email: email.trim().toLowerCase(),
     password,
@@ -142,6 +144,7 @@ async function getAllUsers() {
   const users = readUsers();
   return users.map(u => ({
     _id: u._id,
+    clerkId: u.clerkId,
     username: u.username,
     email: u.email,
     role: u.role,

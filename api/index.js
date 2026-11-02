@@ -4,6 +4,8 @@ const routes = {
   'admin': require('./admin'),
   'apikeys': require('./apikeys'),
   'checkout': require('./checkout'),
+  'clerk-config': require('./clerk-config'),
+  'clerk-sync': require('./clerk-sync'),
   'credits': require('./credits'),
   'forgot-password': require('./forgot-password'),
   'google-auth': require('./google-auth'),

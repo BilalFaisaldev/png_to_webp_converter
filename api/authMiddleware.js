@@ -5,7 +5,8 @@ const JWT_SECRET = process.env.JWT_SECRET || 'png_to_webp_jwt_secret_key_2026_su
 function generateToken(user) {
   return jwt.sign(
     {
-      id: user._id,
+      id: user._id || user.id,
+      clerkId: user.clerkId || null,
       username: user.username,
       email: user.email,
       role: user.role
@@ -16,9 +17,25 @@ function generateToken(user) {
 }
 
 function verifyToken(token) {
+  if (!token) return null;
+
+  // 1. Check local JWT signature
   try {
     return jwt.verify(token, JWT_SECRET);
   } catch (err) {
+    // 2. Fallback: decode Clerk session JWT
+    try {
+      const decoded = jwt.decode(token);
+      if (decoded && (decoded.sub || decoded.id)) {
+        return {
+          id: decoded.sub || decoded.id,
+          clerkId: decoded.sub || null,
+          username: decoded.username || decoded.sub || 'user',
+          email: decoded.email || '',
+          role: decoded.metadata?.role || decoded.role || 'user'
+        };
+      }
+    } catch (decodeErr) {}
     return null;
   }
 }
