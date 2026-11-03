@@ -544,16 +544,7 @@ function filterTableRows() {
    ========================================================================== */
 async function startBatchConversion() {
   if (state.isConverting || state.filesQueue.length === 0) return;
-  
-  // Credit check for non-admin users
-  const pendingImagesCount = state.filesQueue.filter(f => f.status !== 'success').length;
-  if (state.user && state.user.username !== 'admin') {
-    const currentCredits = parseInt(state.user.credits || '0', 10);
-    if (currentCredits < pendingImagesCount) {
-      alert(`Insufficient Credits! You are trying to convert ${pendingImagesCount} images, but only have ${currentCredits} credits left. Please contact Bilal Faisal Arain (0327-2190535) to refill credits.`);
-      return;
-    }
-  }
+  // 100% Free & Unlimited Conversion
 
   toggleUIControls(false);
   state.isConverting = true;
@@ -597,33 +588,8 @@ async function startBatchConversion() {
 
     try {
       const results = await convertSingleImage(entry);
-      
-      // Deduct credit for standard user
-      let creditDeducted = true;
-      if (state.user && state.user.username !== 'admin') {
-        try {
-          const credRes = await fetch('/api/credits', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username: state.user.username, amount: 1 })
-          });
-          const credData = await credRes.json();
-          if (credRes.ok) {
-            state.user.credits = credData.credits;
-            localStorage.setItem('auth_user', JSON.stringify(state.user));
-            elements.navbarCredits.textContent = `Credits: ${state.user.credits}`;
-          } else {
-            creditDeducted = false;
-            throw new Error(credData.error || 'Failed to deduct credits');
-          }
-        } catch (e) {
-          creditDeducted = false;
-          alert(`Credit Error: ${e.message}. Conversion stopped.`);
-          break; // Stop batch run if credit check fails or is exhausted
-        }
-      }
-
-      if (creditDeducted) {
+      // 100% Free & Unlimited conversion (no credit deduction)
+      {
         // Update entry state
         entry.status = 'success';
         entry.webpBlob = results.blob;
@@ -1057,7 +1023,7 @@ function showAuthenticatedApp() {
     if (elements.btnAdminPortal) elements.btnAdminPortal.style.display = 'none';
     if (elements.navbarCredits) {
       elements.navbarCredits.style.display = 'inline-flex';
-      elements.navbarCredits.textContent = `Credits: ${state.user ? state.user.credits : 50}`;
+      elements.navbarCredits.textContent = '100% Free (Unlimited)';
     }
   }
 
